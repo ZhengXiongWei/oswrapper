@@ -1,0 +1,13 @@
+.settings
+.project
+.classpath
+target
+Debug
+Release
+ipch
+x64
+*.filters
+*.user
+*.sdf
+*.opensdf
+*.suo
