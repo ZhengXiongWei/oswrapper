@@ -106,7 +106,9 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetPath) $(ProjectDir)..\..\..\..\</Command>
+      <Command>copy $(TargetPath) $(ProjectDir)..\..\resources\lib\win32_x86
+copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -133,7 +135,10 @@
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetPath) $(ProjectDir)..\..\..\..\</Command>
+      <Command>copy $(TargetPath) $(ProjectDir)..\..\resources\lib\win32_x86_64
+copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86_64
+
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -158,6 +163,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(TargetPath) $(ProjectDir)..\..\resources\lib\win32_x86
+copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -184,6 +194,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(TargetPath) $(ProjectDir)..\..\resources\lib\win32_x86_64
+copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86_64
+
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="adapterinfo.c" />

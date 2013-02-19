@@ -59,7 +59,7 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_Process_GetProcessMemoryInfo
 {
 	BOOL ret;
 	PROCESS_MEMORY_COUNTERS_EX counters;
-	ret = GetProcessMemoryInfo((HANDLE)hProcess, &counters, sizeof(PROCESS_MEMORY_COUNTERS_EX));
+	ret = GetProcessMemoryInfo((HANDLE)hProcess, (PPROCESS_MEMORY_COUNTERS)&counters, sizeof(PROCESS_MEMORY_COUNTERS_EX));
 
 	SetLongRef(env, pageFaultCount, counters.PageFaultCount);
 	SetLongRef(env, peakWorkingSetSize, counters.PeakWorkingSetSize);

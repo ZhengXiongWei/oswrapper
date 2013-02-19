@@ -79,7 +79,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readAllEventLogs
 				PEVENTLOGRECORD record = (PEVENTLOGRECORD)pRead;
 
 				pRead += record->Length;
-				if(record->RecordNumber < begin)
+				if((signed)record->RecordNumber < begin)
 					continue;
 
 				(*env)->CallVoidMethod(env, list, listAdd, getEventLogObject(env, lpLogName, record));
