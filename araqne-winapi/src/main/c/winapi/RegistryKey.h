@@ -39,7 +39,7 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_RegistryKey_RegQueryValueEx
   (JNIEnv *, jobject, jint, jstring, jobject, jobject);
 
 /*
- * Class:     org.araqne_winapi_RegistryKey
+ * Class:     org_araqne_winapi_RegistryKey
  * Method:    RegCloseKey
  * Signature: (I)I
  */
