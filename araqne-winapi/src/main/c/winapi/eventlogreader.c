@@ -196,8 +196,8 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog(JNI
 
 jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record) {
 	jclass clzString = (*env)->FindClass(env, "java/lang/String");
-	jclass clzEventLog = (*env)->FindClass(env, "org.araqne/winapi/EventLog");
-	jmethodID eventLogInit = (*env)->GetMethodID(env, clzEventLog, "<init>", "(IILorg.araqne/winapi/EventType;IILjava/lang/String;Ljava/lang/String;[BLjava/lang/String;Ljava/lang/String;[B)V");
+	jclass clzEventLog = (*env)->FindClass(env, "org/araqne/winapi/EventLog");
+	jmethodID eventLogInit = (*env)->GetMethodID(env, clzEventLog, "<init>", "(IILorg/araqne/winapi/EventType;IILjava/lang/String;Ljava/lang/String;[BLjava/lang/String;Ljava/lang/String;[B)V");
 
 	LPTSTR lpEventType = getEventType(record->EventType);
 	LPTSTR lpSourceName = (LPTSTR)((PBYTE)&(record->DataOffset)+4);

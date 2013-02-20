@@ -156,7 +156,6 @@ copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86_64
     </ClCompile>
     <Link>
       <AdditionalDependencies>Psapi.lib;Advapi32.lib;IpHlpApi.lib;Pdh.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(ProjectDir)\..\..\resources\lib\win32_x86\$(ProjectName).dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -187,7 +186,6 @@ copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86
     </ClCompile>
     <Link>
       <AdditionalDependencies>Psapi.lib;Advapi32.lib;IpHlpApi.lib;Pdh.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(ProjectDir)\..\..\resources\lib\win32_x86_64\$(ProjectName).dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

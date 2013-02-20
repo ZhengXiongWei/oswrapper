@@ -18,7 +18,7 @@
 #include "ArpCache.h"
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_ArpCache_getArpEntries(JNIEnv *env, jobject obj) {
-	jclass clzArpEntry = (*env)->FindClass(env, "org.araqne/winapi/ArpEntry");
+	jclass clzArpEntry = (*env)->FindClass(env, "org/araqne/winapi/ArpEntry");
 	jmethodID arpCacheInit = (*env)->GetMethodID(env, clzArpEntry, "<init>", "(I[B[BLjava/lang/String;)V");
 	jobjectArray cache = NULL;
 	PMIB_IPNETTABLE pIpNetTable = NULL;

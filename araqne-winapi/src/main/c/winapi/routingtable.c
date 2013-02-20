@@ -18,7 +18,7 @@
 #include "RoutingTable.h"
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_RoutingTable_getRoutingEntries(JNIEnv *env, jobject obj) {
-	jclass clzRoutingEntry = (*env)->FindClass(env, "org.araqne/winapi/RoutingEntry");
+	jclass clzRoutingEntry = (*env)->FindClass(env, "org/araqne/winapi/RoutingEntry");
 	jobjectArray entries = NULL;
 	PMIB_IPFORWARDTABLE pIpForwardTable = NULL;
 	ULONG dwSize = 0;
@@ -62,7 +62,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_RoutingTable_getRoutingEnt
 }
 
 jobject getForwardRow(JNIEnv *env, MIB_IPFORWARDROW row) {
-	jclass clzRoutingEntry = (*env)->FindClass(env, "org.araqne/winapi/RoutingEntry");
+	jclass clzRoutingEntry = (*env)->FindClass(env, "org/araqne/winapi/RoutingEntry");
 	jmethodID routingEntryInit = (*env)->GetMethodID(env, clzRoutingEntry, "<init>", "([B[BII[BILjava/lang/String;Ljava/lang/String;IIIIII)V");
 	jbyteArray destination = (*env)->NewByteArray(env, 4);
 	jbyteArray subnet = (*env)->NewByteArray(env, 4);

@@ -52,7 +52,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_AdapterInfo_nativeGetAdapterInf
 }
 
 jobject getJavaObject(JNIEnv *env, PIP_ADAPTER_INFO info) {
-	jclass clzAdapterInfo = (*env)->FindClass(env, "org.araqne/winapi/AdapterInfo");
+	jclass clzAdapterInfo = (*env)->FindClass(env, "org/araqne/winapi/AdapterInfo");
 	jmethodID adapterInfoInit = (*env)->GetMethodID(env, clzAdapterInfo, "<init>", "(Ljava/lang/String;Ljava/lang/String;[BIIZZ)V");
 	jstring name = (*env)->NewStringUTF(env, info->AdapterName);
 	jstring description = (*env)->NewStringUTF(env, info->Description);

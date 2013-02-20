@@ -17,7 +17,7 @@
 #include "MemoryStatus.h"
 
 JNIEXPORT void JNICALL Java_org_araqne_winapi_MemoryStatus_getMemoryStatus(JNIEnv *env, jobject obj, jobject stat) {
-	jclass clzStat = (*env)->FindClass(env, "org.araqne/winapi/MemoryStatus");
+	jclass clzStat = (*env)->FindClass(env, "org/araqne/winapi/MemoryStatus");
 	jfieldID totalPhys = (*env)->GetFieldID(env, clzStat, "totalPhysical", "J");
 	jfieldID availPhys = (*env)->GetFieldID(env, clzStat, "availablePhysical", "J");
 	jfieldID totalPF = (*env)->GetFieldID(env, clzStat, "totalPageFile", "J");

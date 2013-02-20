@@ -18,7 +18,7 @@
 #include "IpGlobalProperties.h"
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getTcpConnections(JNIEnv *env, jobject obj, jboolean isIpv4) {
-	jclass clzTcpStat = (*env)->FindClass(env, "org.araqne/winapi/TcpConnectionInformation");
+	jclass clzTcpStat = (*env)->FindClass(env, "org/araqne/winapi/TcpConnectionInformation");
 	jmethodID tcpStatInit = (*env)->GetMethodID(env, clzTcpStat, "<init>", "([BII[BIILjava/lang/String;I)V");
 	jobjectArray stats = NULL;
 	DWORD dwSize = sizeof (MIB_TCPTABLE_OWNER_PID);
@@ -92,7 +92,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getTcpC
 }
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getUdpListeners(JNIEnv *env, jobject obj, jboolean isIpv4) {
-	jclass clzUdpStat = (*env)->FindClass(env, "org.araqne/winapi/UdpListenerInformation");
+	jclass clzUdpStat = (*env)->FindClass(env, "org/araqne/winapi/UdpListenerInformation");
 	jmethodID udpStatInit = (*env)->GetMethodID(env, clzUdpStat, "<init>", "([BIII)V");
 	jobjectArray stats = NULL;
 	PMIB_UDPTABLE_OWNER_PID udpTable = NULL;
