@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <pdh.h>
+#include <PDHMsg.h>
 #include "PerformanceCounter.h"
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getMachines(JNIEnv *env, jobject obj) {
@@ -32,6 +33,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getMach
 	stat = PdhEnumMachines(NULL, lpMachineNameList, &dwBufferLength);
 	if(stat != ERROR_SUCCESS) {
 		fprintf(stderr, "Error in PdhEnumMachines: 0x%x\n", stat);
+		free(lpMachineNameList);
 		return NULL;
 	}
 
@@ -53,7 +55,6 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getCate
 		stat = PdhConnectMachine(machineName);
 		if(stat != ERROR_SUCCESS) {
 			fprintf(stderr, "Error in PdhConnectMachine:, 0x%x\n", stat);
-		if(machineName)
 			(*env)->ReleaseStringChars(env, machine, machineName);
 			return NULL;
 		}
@@ -62,12 +63,17 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getCate
 	PdhEnumObjects(NULL, machineName, NULL, &dwBufferLength, detail, TRUE);
 	if(dwBufferLength == 0) {
 		fprintf(stderr, "Error in PdhEnumObjects\n");
+		if (machineName)
+			(*env)->ReleaseStringChars(env, machine, machineName);
 		return NULL;
 	}
 
 	lpCategoryNameList = (LPTSTR)malloc(sizeof(TCHAR)*dwBufferLength);
 	stat = PdhEnumObjects(NULL, machineName, lpCategoryNameList, &dwBufferLength, detail, TRUE);
 	if(stat != ERROR_SUCCESS) {
+		free(lpCategoryNameList);
+		if (machineName)
+			(*env)->ReleaseStringChars(env, machine, machineName);
 		fprintf(stderr, "Error in PdhEnumObjects: 0x%x\n", stat);
 		return NULL;
 	}
@@ -100,7 +106,6 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_PerformanceCounter_getCounters(
 		stat = PdhConnectMachine(machineName);
 		if(stat != ERROR_SUCCESS) {
 			fprintf(stderr, "Error in PdhConnectMachine:, 0x%x\n", stat);
-		if(machineName)
 			(*env)->ReleaseStringChars(env, machine, machineName);
 			return NULL;
 		}
@@ -116,6 +121,8 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_PerformanceCounter_getCounters(
 		(*env)->ReleaseStringChars(env, machine, machineName);
 	if(stat != ERROR_SUCCESS) {
 		fprintf(stderr, "Error in PdhEnumObjectItems\n");
+		free(lpCounterList);
+		free(lpInstanceList);
 		return NULL;
 	}
 
@@ -142,8 +149,6 @@ jobjectArray convertStringArray(JNIEnv *env, LPTSTR source, DWORD dwLength) {
 	for(tempStr=source; tempStr<source+dwLength;) {
 		if(wcslen(tempStr) > 0)
 			strCount++;
-		if(strCount == 109)
-			fwprintf(stderr, L"%s\n", tempStr);
 		tempStr += wcslen(tempStr) + 1;
 	}
 
@@ -221,12 +226,14 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounter(JNIE
 	(*env)->ReleaseStringChars(env, machine, pathElement.szMachineName);
 	if(stat != ERROR_SUCCESS) {
 		fprintf(stderr, "Error in PdhMakeCounterPath: 0x%x\n", stat);
+		free(counterPath);
 		return 0;
 	}
 
 	stat = PdhAddCounter(phQuery, counterPath, 0, &phCounter);
 	if(stat != ERROR_SUCCESS) {
 		fprintf(stderr, "Error in PdhAddCounter: 0x%x\n", stat);
+		free(counterPath);
 		return 0;
 	}
 	free(counterPath);
@@ -269,4 +276,37 @@ JNIEXPORT void JNICALL Java_org_araqne_winapi_PerformanceCounter_close(JNIEnv *e
 	stat = PdhCloseQuery((PDH_HQUERY)queryHandle);
 	if(stat != ERROR_SUCCESS)
 		fprintf(stderr, "Error in PdhCloseQuery: 0x%x\n", stat);
+}
+
+JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_expandCounterPath(JNIEnv *env, jobject obj, jstring path) {
+	jobjectArray categoryList = NULL;
+	LPTSTR strPath = path ? (LPTSTR)(*env)->GetStringChars(env, path, JNI_FALSE) : NULL;
+	LPTSTR lpCounterList = NULL;
+	DWORD dwBufferLength = 0;
+	PDH_STATUS stat = 0;
+
+	if (wcsnlen(strPath, PDH_MAX_COUNTER_NAME + 1) > PDH_MAX_COUNTER_NAME) 
+		return NULL;
+
+	if (path) {
+		stat = PdhExpandCounterPathW(strPath, NULL, &dwBufferLength);
+		if (stat == PDH_MORE_DATA) {
+			lpCounterList = (LPTSTR) malloc(dwBufferLength * sizeof(TCHAR));
+			stat = PdhExpandCounterPathW(strPath, lpCounterList, &dwBufferLength);
+			if (stat != ERROR_SUCCESS) {
+				(*env)->ReleaseStringChars(env, path, strPath);
+				free(lpCounterList);
+				return NULL;
+			}
+		}
+	}
+
+	if(path)
+		(*env)->ReleaseStringChars(env, path, strPath);
+
+	categoryList = convertStringArray(env, lpCounterList, dwBufferLength);
+
+	free(lpCounterList);
+
+	return categoryList;
 }

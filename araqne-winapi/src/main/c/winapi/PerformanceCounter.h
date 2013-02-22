@@ -78,6 +78,14 @@ JNIEXPORT jdouble JNICALL Java_org_araqne_winapi_PerformanceCounter_nextValue
 JNIEXPORT void JNICALL Java_org_araqne_winapi_PerformanceCounter_close
   (JNIEnv *, jobject, jint, jint);
 
+/*
+ * Class:     org_araqne_winapi_PerformanceCounter
+ * Method:    expandCounterPath
+ * Signature: (Ljava/lang/String;)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_expandCounterPath
+  (JNIEnv *, jobject, jstring);
+
 jobjectArray convertStringArray(JNIEnv *, LPTSTR, DWORD);
 
 #ifdef __cplusplus

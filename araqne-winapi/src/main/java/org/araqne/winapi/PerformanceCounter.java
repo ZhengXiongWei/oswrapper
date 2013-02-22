@@ -60,6 +60,7 @@ public class PerformanceCounter {
 	}
 
 	private static native String[] getCategories(String machine, int detail);
+	public static native String[] expandCounterPath(String path);
 
 	public static List<String> getInstances(String category) {
 		return Arrays.asList(get(category).get("instances"));
@@ -148,6 +149,11 @@ public class PerformanceCounter {
 
 		Thread.sleep(interval);
 		return nextValue(queryHandle, counterHandle);
+	}
+
+	@Override
+	public String toString() {
+		return "PerformanceCounter [counterHandle=" + counterHandle + "]";
 	}
 
 	private native double nextValue(int queryHandle, int counterHandle);
