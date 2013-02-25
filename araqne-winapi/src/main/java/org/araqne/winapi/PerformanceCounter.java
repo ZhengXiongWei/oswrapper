@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PerformanceCounter {
 	static {
@@ -41,7 +43,7 @@ public class PerformanceCounter {
 
 	private int queryHandle;
 	private ArrayList<Integer> counterHandles;
-	private int[] counterHandleArray;
+	private int[] counterHandleArray = null;
 
 	public static native String[] getMachines();
 
@@ -128,24 +130,48 @@ public class PerformanceCounter {
 		this(category, counter, instance, null);
 	}
 
+	public static final Pattern ptrnCounterName =
+			Pattern.compile("(?:\\\\\\\\([^\\\\]*)|)\\\\([^\\\\(]*)(?:\\(([^)]*)\\)|)\\\\(.*)");
+
 	public PerformanceCounter(String category, String counter, String instance, String machine) {
 		queryHandle = open();
 		counterHandles = new ArrayList<Integer>();
-		addCounter(queryHandle, category, counter, instance, machine);
+		addCounter(category, counter, instance, machine);
 		if (queryHandle == 0 || counterHandles.size() == 0)
 			throw new IllegalStateException();
 	}
 
+	public int addCounter(String category, String counter, String instance, String machine) {
+		counterHandleArray = null;
+		int ret = addCounterN(queryHandle, category, counter, instance, machine);
+		if (ret != 0)
+			counterHandles.add(ret);
+		return ret;
+	}
+
+	public int addCounter(String counterFullPath) {
+		Matcher matcher = ptrnCounterName.matcher(counterFullPath);
+		if (matcher.matches()) {
+			String machine = matcher.group(1);
+			String category = matcher.group(2);
+			String instance = matcher.group(3);
+			String counter = matcher.group(4);
+			return addCounter(category, counter, instance, machine);
+		} else
+			return 0;
+	}
+
 	private native int open();
 
-	private native int addCounter(int queryHandle, String category, String counter, String instance, String machine);
+	private native int addCounterN(int queryHandle, String category, String counter, String instance, String machine);
 
 	public double[] nextValue() {
 		if (queryHandle == 0 || counterHandles.size() == 0)
 			throw new IllegalStateException("Already Closed");
 
 		double[] values = new double[counterHandles.size()];
-		return queryAndGet(queryHandle, getCounterHandleArray(), values);
+		double[] result = queryAndGet(queryHandle, getCounterHandleArray(), values);
+		return result;
 	}
 
 	public double[] nextValue(int interval) throws InterruptedException {
@@ -158,7 +184,7 @@ public class PerformanceCounter {
 	}
 
 	private int[] getCounterHandleArray() {
-		if (counterHandleArray != null) {
+		if (counterHandleArray == null) {
 			int cnt = 0;
 			counterHandleArray = new int[counterHandles.size()];
 			for (int ch : counterHandles) {

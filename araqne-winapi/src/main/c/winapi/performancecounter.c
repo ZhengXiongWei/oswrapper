@@ -180,7 +180,7 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_open(JNIEnv *en
 	return (jint)phQuery;
 }
 
-JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounter(JNIEnv *env, jobject obj, jint queryHandle, jstring category, jstring counter, jstring instance, jstring machine) {
+JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounterN(JNIEnv *env, jobject obj, jint queryHandle, jstring category, jstring counter, jstring instance, jstring machine) {
 	PDH_HCOUNTER phCounter = NULL;
 	PDH_HQUERY phQuery = (PDH_HQUERY)queryHandle;
 	LPTSTR counterPath = NULL;
@@ -255,14 +255,20 @@ JNIEXPORT jdoubleArray JNICALL Java_org_araqne_winapi_PerformanceCounter_queryAn
 
 	stat = PdhCollectQueryData(phQuery);
 	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "PdhCollectQueryData: 0x%x\n", stat);
-		return 0;
+		if (stat == PDH_NO_DATA) {
+			// no data available - hide stderr report
+			return NULL;
+		} else {
+			fprintf(stderr, "PdhCollectQueryData failed: 0x%x\n", stat);
+			return NULL;
+		}
 	}
 
 	handleCnt = (*env)->GetArrayLength(env, counterHandles);
 	bufCnt = (*env)->GetArrayLength(env, valueBuf);
 
 	if (bufCnt < handleCnt)
+		fprintf(stderr, "PdhCollectQueryData - IllegalArgument\n", stat);
 		return NULL;
 
 	pCounterHandle = (*env)->GetIntArrayElements(env, counterHandles, 0);

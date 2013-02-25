@@ -59,7 +59,7 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_open
  * Method:    addCounter
  * Signature: (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounter
+JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounterN
   (JNIEnv *, jobject, jint, jstring, jstring, jstring, jstring);
 
 /*
