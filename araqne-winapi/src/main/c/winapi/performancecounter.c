@@ -243,11 +243,15 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounter(JNIE
 	return (jint)phCounter;
 }
 
-JNIEXPORT jdouble JNICALL Java_org_araqne_winapi_PerformanceCounter_nextValue(JNIEnv *env, jobject obj, jint queryHandle, jint counterHandle) {
+JNIEXPORT jdoubleArray JNICALL Java_org_araqne_winapi_PerformanceCounter_queryAndGet(JNIEnv *env, jobject obj, jint queryHandle, jintArray counterHandles, jdoubleArray valueBuf) {
 	PDH_HQUERY phQuery = (PDH_HQUERY)queryHandle;
-	PDH_HCOUNTER phCounter = (PDH_HCOUNTER)counterHandle;
+	PDH_HCOUNTER phCounter = NULL;
 	PDH_FMT_COUNTERVALUE pValue;
 	PDH_STATUS stat = 0;
+	jsize handleCnt, bufCnt;
+	jint* pCounterHandle;
+	jdouble* pValueBuf;
+	int i;
 
 	stat = PdhCollectQueryData(phQuery);
 	if(stat != ERROR_SUCCESS) {
@@ -255,23 +259,36 @@ JNIEXPORT jdouble JNICALL Java_org_araqne_winapi_PerformanceCounter_nextValue(JN
 		return 0;
 	}
 
-	stat = PdhGetFormattedCounterValue(phCounter, PDH_FMT_DOUBLE, NULL, &pValue);
-	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "PdhGetFormattedCounterValue: 0x%x\n", stat);
-		return 0;
-	}
+	handleCnt = (*env)->GetArrayLength(env, counterHandles);
+	bufCnt = (*env)->GetArrayLength(env, valueBuf);
 
-	return pValue.doubleValue;
+	if (bufCnt < handleCnt)
+		return NULL;
+
+	pCounterHandle = (*env)->GetIntArrayElements(env, counterHandles, 0);
+	pValueBuf = (*env)->GetDoubleArrayElements(env, valueBuf, 0);
+	for (i = 0; i < handleCnt; ++i) {
+		stat = PdhGetFormattedCounterValue((PDH_HCOUNTER) pCounterHandle[i], PDH_FMT_DOUBLE, NULL, &pValue);
+		if(stat != ERROR_SUCCESS) {
+			fprintf(stderr, "PdhGetFormattedCounterValue: 0x%x\n", stat);
+		}
+		else pValueBuf[i] = pValue.doubleValue;
+	}
+	(*env)->ReleaseIntArrayElements(env, counterHandles, pCounterHandle, (jint)NULL);
+	(*env)->ReleaseDoubleArrayElements(env, valueBuf, pValueBuf, (jint)NULL);
+
+	return valueBuf;
 }
 
-JNIEXPORT void JNICALL Java_org_araqne_winapi_PerformanceCounter_close(JNIEnv *env, jobject obj, jint queryHandle, jint counterHandle) {
+JNIEXPORT void JNICALL Java_org_araqne_winapi_PerformanceCounter_close(JNIEnv *env, jobject obj, jint queryHandle) {
 	PDH_STATUS stat = 0;
 
-	stat = PdhRemoveCounter((PDH_HCOUNTER)counterHandle);
-	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "Error in PdhRemoveCounter: 0x%x\n", stat);
-		return;
-	}
+	// removing counters. does not have to be here.
+	//stat = PdhRemoveCounter((PDH_HCOUNTER)counterHandle);
+	//if(stat != ERROR_SUCCESS) {
+	//	fprintf(stderr, "Error in PdhRemoveCounter: 0x%x\n", stat);
+	//	return;
+	//}
 
 	stat = PdhCloseQuery((PDH_HQUERY)queryHandle);
 	if(stat != ERROR_SUCCESS)

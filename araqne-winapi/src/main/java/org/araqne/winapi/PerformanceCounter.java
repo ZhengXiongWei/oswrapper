@@ -15,6 +15,7 @@
  */
 package org.araqne.winapi;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,8 @@ public class PerformanceCounter {
 	};
 
 	private int queryHandle;
-	private int counterHandle;
+	private ArrayList<Integer> counterHandles;
+	private int[] counterHandleArray;
 
 	public static native String[] getMachines();
 
@@ -60,6 +62,7 @@ public class PerformanceCounter {
 	}
 
 	private static native String[] getCategories(String machine, int detail);
+
 	public static native String[] expandCounterPath(String path);
 
 	public static List<String> getInstances(String category) {
@@ -127,8 +130,9 @@ public class PerformanceCounter {
 
 	public PerformanceCounter(String category, String counter, String instance, String machine) {
 		queryHandle = open();
-		counterHandle = addCounter(queryHandle, category, counter, instance, machine);
-		if (queryHandle == 0 || counterHandle == 0)
+		counterHandles = new ArrayList<Integer>();
+		addCounter(queryHandle, category, counter, instance, machine);
+		if (queryHandle == 0 || counterHandles.size() == 0)
 			throw new IllegalStateException();
 	}
 
@@ -136,37 +140,50 @@ public class PerformanceCounter {
 
 	private native int addCounter(int queryHandle, String category, String counter, String instance, String machine);
 
-	public double nextValue() {
-		if (queryHandle == 0 || counterHandle == 0)
+	public double[] nextValue() {
+		if (queryHandle == 0 || counterHandles.size() == 0)
 			throw new IllegalStateException("Already Closed");
 
-		return nextValue(queryHandle, counterHandle);
+		double[] values = new double[counterHandles.size()];
+		return queryAndGet(queryHandle, getCounterHandleArray(), values);
 	}
 
-	public double nextValue(int interval) throws InterruptedException {
-		if (queryHandle == 0 || counterHandle == 0)
+	public double[] nextValue(int interval) throws InterruptedException {
+		if (queryHandle == 0 || counterHandles.size() == 0)
 			throw new IllegalStateException("Already Closed");
 
 		Thread.sleep(interval);
-		return nextValue(queryHandle, counterHandle);
+		double[] values = new double[counterHandles.size()];
+		return queryAndGet(queryHandle, getCounterHandleArray(), values);
+	}
+
+	private int[] getCounterHandleArray() {
+		if (counterHandleArray != null) {
+			int cnt = 0;
+			counterHandleArray = new int[counterHandles.size()];
+			for (int ch : counterHandles) {
+				counterHandleArray[cnt++] = ch;
+			}
+		}
+		return counterHandleArray;
 	}
 
 	@Override
 	public String toString() {
-		return "PerformanceCounter [counterHandle=" + counterHandle + "]";
+		return "PerformanceCounter [queryHandle=" + queryHandle + ", counterHandles.size(): " + counterHandles.size()
+				+ "]";
 	}
 
-	private native double nextValue(int queryHandle, int counterHandle);
+	private native double[] queryAndGet(int queryHandle, int[] counterHandles, double[] valueBuf);
 
 	public void close() {
-		if (queryHandle == 0 || counterHandle == 0)
+		if (queryHandle == 0 || counterHandles.size() == 0)
 			throw new IllegalStateException("Already Closed");
 
-		close(queryHandle, counterHandle);
+		close(queryHandle);
 		queryHandle = 0;
-		counterHandle = 0;
 	}
 
-	private native void close(int queryHandle, int counterHandle);
+	private native void close(int queryHandle);
 
 }

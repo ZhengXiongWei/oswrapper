@@ -67,8 +67,8 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounter
  * Method:    nextValue
  * Signature: (II)D
  */
-JNIEXPORT jdouble JNICALL Java_org_araqne_winapi_PerformanceCounter_nextValue
-  (JNIEnv *, jobject, jint, jint);
+JNIEXPORT jdoubleArray JNICALL Java_org_araqne_winapi_PerformanceCounter_queryAndGet
+  (JNIEnv *, jobject, jint, jintArray, jdoubleArray);
 
 /*
  * Class:     org_araqne_winapi_PerformanceCounter
@@ -76,7 +76,7 @@ JNIEXPORT jdouble JNICALL Java_org_araqne_winapi_PerformanceCounter_nextValue
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL Java_org_araqne_winapi_PerformanceCounter_close
-  (JNIEnv *, jobject, jint, jint);
+  (JNIEnv *, jobject, jint);
 
 /*
  * Class:     org_araqne_winapi_PerformanceCounter
