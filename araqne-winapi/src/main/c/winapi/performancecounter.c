@@ -1,18 +1,18 @@
 /*
- * Copyright 2010 NCHOVY
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2010 NCHOVY
+* 
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* 
+* http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #include <pdh.h>
 #include <PDHMsg.h>
 #include "PerformanceCounter.h"
@@ -199,8 +199,8 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounterN(JNI
 		stat = PdhConnectMachine(pathElement.szMachineName);
 		if(stat != ERROR_SUCCESS) {
 			fprintf(stderr, "Error in PdhConnectMachine:, 0x%x\n", stat);
-		if(pathElement.szMachineName)
-			(*env)->ReleaseStringChars(env, category, pathElement.szObjectName);
+			if(pathElement.szMachineName)
+				(*env)->ReleaseStringChars(env, category, pathElement.szObjectName);
 			(*env)->ReleaseStringChars(env, counter, pathElement.szCounterName);
 			(*env)->ReleaseStringChars(env, instance, pathElement.szInstanceName);
 			(*env)->ReleaseStringChars(env, machine, pathElement.szMachineName);
@@ -267,9 +267,10 @@ JNIEXPORT jdoubleArray JNICALL Java_org_araqne_winapi_PerformanceCounter_queryAn
 	handleCnt = (*env)->GetArrayLength(env, counterHandles);
 	bufCnt = (*env)->GetArrayLength(env, valueBuf);
 
-	if (bufCnt < handleCnt)
+	if (bufCnt < handleCnt) {
 		fprintf(stderr, "PdhCollectQueryData - IllegalArgument\n", stat);
 		return NULL;
+	}
 
 	pCounterHandle = (*env)->GetIntArrayElements(env, counterHandles, 0);
 	pValueBuf = (*env)->GetDoubleArrayElements(env, valueBuf, 0);

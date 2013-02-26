@@ -119,7 +119,8 @@ public class PerformanceCounter {
 	private static native Object getCounters(String category, String machine, int detail);
 
 	public PerformanceCounter() {
-		this(null, null);
+		queryHandle = open();
+		counterHandles = new ArrayList<Integer>();
 	}
 
 	public PerformanceCounter(String category, String counter) {
@@ -134,8 +135,7 @@ public class PerformanceCounter {
 			Pattern.compile("(?:\\\\\\\\([^\\\\]*)|)\\\\([^\\\\(]*)(?:\\(([^)]*)\\)|)\\\\(.*)");
 
 	public PerformanceCounter(String category, String counter, String instance, String machine) {
-		queryHandle = open();
-		counterHandles = new ArrayList<Integer>();
+		this();
 		addCounter(category, counter, instance, machine);
 		if (queryHandle == 0 || counterHandles.size() == 0)
 			throw new IllegalStateException();
