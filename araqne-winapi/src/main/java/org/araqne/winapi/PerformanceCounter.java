@@ -143,10 +143,13 @@ public class PerformanceCounter {
 
 	public int addCounter(String category, String counter, String instance, String machine) {
 		counterHandleArray = null;
-		int ret = addCounterN(queryHandle, category, counter, instance, machine);
-		if (ret != 0)
+		try {
+			int ret = addCounterN(queryHandle, category, counter, instance, machine);
 			counterHandles.add(ret);
-		return ret;
+			return ret;
+		} catch (RuntimeException e) {
+			return 0;
+		}
 	}
 
 	public int addCounter(String counterFullPath) {
@@ -166,24 +169,36 @@ public class PerformanceCounter {
 	private native int addCounterN(int queryHandle, String category, String counter, String instance, String machine);
 
 	public double[] nextValue() {
-		if (queryHandle == 0 || counterHandles.size() == 0)
+		if (queryHandle == 0)
 			throw new IllegalStateException("Already Closed");
 
-		double[] values = new double[counterHandles.size()];
-		double[] result = queryAndGet(queryHandle, getCounterHandleArray(), values);
-		return result;
+		if (counterHandles.size() != 0) {
+			double[] values = new double[counterHandles.size()];
+			double[] result = queryAndGet(queryHandle, getCounterHandleArray(), values);
+			return result;
+		} else {
+			return new double[0];
+		}
 	}
 
 	public double[] nextValue(int interval) throws InterruptedException {
-		if (queryHandle == 0 || counterHandles.size() == 0)
+		if (queryHandle == 0)
 			throw new IllegalStateException("Already Closed");
 
 		Thread.sleep(interval);
-		double[] values = new double[counterHandles.size()];
-		return queryAndGet(queryHandle, getCounterHandleArray(), values);
+		if (counterHandles.size() != 0) {
+			try {
+				double[] values = new double[counterHandles.size()];
+				return queryAndGet(queryHandle, getCounterHandleArray(), values);
+			} catch (Exception e) {
+				return new double[counterHandles.size()];
+			}
+		} else {
+			return new double[0];
+		}
 	}
 
-	private int[] getCounterHandleArray() {
+	public int[] getCounterHandleArray() {
 		if (counterHandleArray == null) {
 			int cnt = 0;
 			counterHandleArray = new int[counterHandles.size()];
@@ -203,7 +218,7 @@ public class PerformanceCounter {
 	private native double[] queryAndGet(int queryHandle, int[] counterHandles, double[] valueBuf);
 
 	public void close() {
-		if (queryHandle == 0 || counterHandles.size() == 0)
+		if (queryHandle == 0)
 			throw new IllegalStateException("Already Closed");
 
 		close(queryHandle);

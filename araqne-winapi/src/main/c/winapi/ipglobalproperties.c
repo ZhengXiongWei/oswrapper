@@ -15,6 +15,7 @@
  */
 #include <windows.h>
 #include <iphlpapi.h>
+#include "jni_common.h"
 #include "IpGlobalProperties.h"
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getTcpConnections(JNIEnv *env, jobject obj, jboolean isIpv4) {
@@ -99,11 +100,14 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getUdpL
 	DWORD dwSize = 0;
 	jsize addrSize = isIpv4 ? 4 : 16;
 	WORD i;
+	DWORD ret;
 
-	GetExtendedUdpTable(NULL, &dwSize, TRUE, isIpv4 ? AF_INET : AF_INET6, UDP_TABLE_OWNER_PID, 0);
+	ret = GetExtendedUdpTable(NULL, &dwSize, TRUE, isIpv4 ? AF_INET : AF_INET6, UDP_TABLE_OWNER_PID, 0);
 	if(dwSize == 0) {
-		fprintf(stderr, "Error in GetExtendedUdpTable\n");
-		return (*env)->NewObjectArray(env, 0, clzUdpStat, NULL);
+		if (ret == ERROR_NOT_SUPPORTED)
+			return (*env)->NewObjectArray(env, 0, clzUdpStat, NULL);;
+		throwExc(env, "Error in GetExtendedUdpTable");
+		return NULL;
 	}
 	udpTable = (PMIB_UDPTABLE_OWNER_PID)malloc(dwSize);
 	GetExtendedUdpTable(udpTable, &dwSize, TRUE, AF_INET, UDP_TABLE_OWNER_PID, 0);

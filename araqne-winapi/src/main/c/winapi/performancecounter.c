@@ -15,6 +15,7 @@
 */
 #include <pdh.h>
 #include <PDHMsg.h>
+#include "jni_common.h"
 #include "PerformanceCounter.h"
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getMachines(JNIEnv *env, jobject obj) {
@@ -25,15 +26,15 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getMach
 
 	PdhEnumMachines(NULL, NULL, &dwBufferLength);
 	if(dwBufferLength == 0) {
-		fprintf(stderr, "Error in PdhEnumMachines\n");
+		throwExc(env, "Error in PdhEnumMachines\n");
 		return NULL;
 	}
 
 	lpMachineNameList = (LPTSTR)malloc(sizeof(TCHAR)*dwBufferLength);
 	stat = PdhEnumMachines(NULL, lpMachineNameList, &dwBufferLength);
 	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "Error in PdhEnumMachines: 0x%x\n", stat);
 		free(lpMachineNameList);
+		throwExc(env, "Error in PdhEnumMachines: 0x%x", stat);
 		return NULL;
 	}
 
@@ -54,7 +55,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getCate
 	if(machineName) {
 		stat = PdhConnectMachine(machineName);
 		if(stat != ERROR_SUCCESS) {
-			fprintf(stderr, "Error in PdhConnectMachine:, 0x%x\n", stat);
+			throwExc(env, "Error in PdhConnectMachine:, 0x%x", stat);
 			(*env)->ReleaseStringChars(env, machine, machineName);
 			return NULL;
 		}
@@ -62,9 +63,9 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getCate
 
 	PdhEnumObjects(NULL, machineName, NULL, &dwBufferLength, detail, TRUE);
 	if(dwBufferLength == 0) {
-		fprintf(stderr, "Error in PdhEnumObjects\n");
 		if (machineName)
 			(*env)->ReleaseStringChars(env, machine, machineName);
+		throwExc(env, "Error in PdhEnumObjects");
 		return NULL;
 	}
 
@@ -74,7 +75,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getCate
 		free(lpCategoryNameList);
 		if (machineName)
 			(*env)->ReleaseStringChars(env, machine, machineName);
-		fprintf(stderr, "Error in PdhEnumObjects: 0x%x\n", stat);
+		throwExc(env, "Error in PdhEnumObjects: 0x%x", stat);
 		return NULL;
 	}
 	if(machineName)
@@ -105,8 +106,8 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_PerformanceCounter_getCounters(
 	if(machineName) {
 		stat = PdhConnectMachine(machineName);
 		if(stat != ERROR_SUCCESS) {
-			fprintf(stderr, "Error in PdhConnectMachine:, 0x%x\n", stat);
 			(*env)->ReleaseStringChars(env, machine, machineName);
+			throwExc(env, "Error in PdhConnectMachine:, 0x%x", stat);
 			return NULL;
 		}
 	}
@@ -120,9 +121,9 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_PerformanceCounter_getCounters(
 	if(machineName)
 		(*env)->ReleaseStringChars(env, machine, machineName);
 	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "Error in PdhEnumObjectItems\n");
 		free(lpCounterList);
 		free(lpInstanceList);
+		throwExc(env, "Error in PdhEnumObjectItems");
 		return NULL;
 	}
 
@@ -173,7 +174,7 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_open(JNIEnv *en
 
 	stat = PdhOpenQuery(NULL, 0, &phQuery);
 	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "Error in PdhOpenQuery: 0x%x\n", stat);
+		throwExc(env, "Error in PdhOpenQuery: 0x%x", stat);
 		return 0;
 	}
 
@@ -198,24 +199,22 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounterN(JNI
 	if(pathElement.szMachineName) {
 		stat = PdhConnectMachine(pathElement.szMachineName);
 		if(stat != ERROR_SUCCESS) {
-			fprintf(stderr, "Error in PdhConnectMachine:, 0x%x\n", stat);
 			if(pathElement.szMachineName)
 				(*env)->ReleaseStringChars(env, category, pathElement.szObjectName);
 			(*env)->ReleaseStringChars(env, counter, pathElement.szCounterName);
 			(*env)->ReleaseStringChars(env, instance, pathElement.szInstanceName);
 			(*env)->ReleaseStringChars(env, machine, pathElement.szMachineName);
-			return 0;
+			return throwExc(env, "Error in PdhConnectMachine:, 0x%x", stat);
 		}
 	}
 
 	PdhMakeCounterPath(&pathElement, NULL, &dwSize, 0);
 	if(dwSize == 0) {
-		fprintf(stderr, "Error in PdhMakeCounterPath\n");
 		(*env)->ReleaseStringChars(env, category, pathElement.szObjectName);
 		(*env)->ReleaseStringChars(env, counter, pathElement.szCounterName);
 		(*env)->ReleaseStringChars(env, instance, pathElement.szInstanceName);
 		(*env)->ReleaseStringChars(env, machine, pathElement.szMachineName);
-		return 0;
+		return throwExc(env, "Error in PdhMakeCounterPath\n");
 	}
 
 	counterPath = (LPTSTR)malloc(sizeof(TCHAR)*dwSize);
@@ -225,16 +224,14 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounterN(JNI
 	(*env)->ReleaseStringChars(env, instance, pathElement.szInstanceName);
 	(*env)->ReleaseStringChars(env, machine, pathElement.szMachineName);
 	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "Error in PdhMakeCounterPath: 0x%x\n", stat);
 		free(counterPath);
-		return 0;
+		return throwExc(env, "Error in PdhMakeCounterPath: 0x%x\n", stat);
 	}
 
 	stat = PdhAddCounter(phQuery, counterPath, 0, &phCounter);
 	if(stat != ERROR_SUCCESS) {
-		fprintf(stderr, "Error in PdhAddCounter: 0x%x\n", stat);
 		free(counterPath);
-		return 0;
+		return throwExc(env, "Error in PdhAddCounter: 0x%x\n", stat);
 	}
 	free(counterPath);
 
@@ -259,7 +256,7 @@ JNIEXPORT jdoubleArray JNICALL Java_org_araqne_winapi_PerformanceCounter_queryAn
 			// no data available - hide stderr report
 			return NULL;
 		} else {
-			fprintf(stderr, "PdhCollectQueryData failed: 0x%x\n", stat);
+			throwExc(env, "PdhCollectQueryData failed: 0x%x\n", stat);
 			return NULL;
 		}
 	}
@@ -268,7 +265,7 @@ JNIEXPORT jdoubleArray JNICALL Java_org_araqne_winapi_PerformanceCounter_queryAn
 	bufCnt = (*env)->GetArrayLength(env, valueBuf);
 
 	if (bufCnt < handleCnt) {
-		fprintf(stderr, "PdhCollectQueryData - IllegalArgument\n", stat);
+		throwExc(env, "PdhCollectQueryData - IllegalArgument\n");
 		return NULL;
 	}
 
@@ -277,7 +274,7 @@ JNIEXPORT jdoubleArray JNICALL Java_org_araqne_winapi_PerformanceCounter_queryAn
 	for (i = 0; i < handleCnt; ++i) {
 		stat = PdhGetFormattedCounterValue((PDH_HCOUNTER) pCounterHandle[i], PDH_FMT_DOUBLE, NULL, &pValue);
 		if(stat != ERROR_SUCCESS) {
-			fprintf(stderr, "PdhGetFormattedCounterValue: 0x%x\n", stat);
+			pValueBuf[i] = -1.0;
 		}
 		else pValueBuf[i] = pValue.doubleValue;
 	}
@@ -299,7 +296,7 @@ JNIEXPORT void JNICALL Java_org_araqne_winapi_PerformanceCounter_close(JNIEnv *e
 
 	stat = PdhCloseQuery((PDH_HQUERY)queryHandle);
 	if(stat != ERROR_SUCCESS)
-		fprintf(stderr, "Error in PdhCloseQuery: 0x%x\n", stat);
+		throwExc(env, "Error in PdhCloseQuery: 0x%x\n", stat);
 }
 
 JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_expandCounterPath(JNIEnv *env, jobject obj, jstring path) {
