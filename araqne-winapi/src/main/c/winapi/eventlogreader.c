@@ -38,6 +38,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readAllEventLogs
 	{
 		jclass exceptionClass = (*env)->FindClass(env, "java/lang/NullPointerException");
 		(*env)->ThrowNew(env, exceptionClass, "Should not input \"NULL\"");
+		free(lpBuffer);
 		return 0;
 	}
 
@@ -46,6 +47,8 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readAllEventLogs
 
 	if(hEventLog == NULL) {
 		fwprintf(stderr, L"Error in OpenEventLog: 0x%x\n", GetLastError());
+		free(lpBuffer);
+		(*env)->ReleaseStringChars(env, jLogName, lpLogName);
 		return 0;
 	}
 
@@ -61,12 +64,20 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readAllEventLogs
 
 			if(error == ERROR_INSUFFICIENT_BUFFER) {
 				fwprintf(stderr, L"Error in ReadEventLog: 0x%x\n", error);
+				CloseEventLog(hEventLog);
+				free(lpBuffer);
+				(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+
 				return 0;
 			}
 
 			tempBuffer = (LPVOID)realloc(lpBuffer, nNumberOfBytesToRead);
 			if(tempBuffer == NULL) {
 				fwprintf(stderr, L"Failed to reallocate the memory for the record buffer (%d bytes)\n", pnMinNumberOfBytesNeeded);
+				CloseEventLog(hEventLog);
+				free(lpBuffer);
+				(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+
 				return 0;
 			}
 			lpBuffer = tempBuffer;
@@ -113,6 +124,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog(JNI
 	{
 		jclass exceptionClass = (*env)->FindClass(env, "java/lang/NullPointerException");
 		(*env)->ThrowNew(env, exceptionClass, "Should not input \"NULL\"");
+		free(lpBuffer);
 		return 0;
 	}
 
@@ -121,11 +133,14 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog(JNI
 
 	if(lpLogName == NULL)
 	{
+		free(lpBuffer);
 		fwprintf(stderr, L"Error in OpenEventLog: 0x%x\n", GetLastError());		
 		return 0;
 	}
 
 	if(hEventLog == NULL) {
+		free(lpBuffer);
+		(*env)->ReleaseStringChars(env, jLogName, lpLogName);
 		fwprintf(stderr, L"Error in OpenEventLog: 0x%x\n", GetLastError());
 		return 0;
 	}
@@ -134,17 +149,27 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog(JNI
 		DWORD error = GetLastError();
 		LPVOID tempBuffer = NULL;
 
-		if(error == ERROR_HANDLE_EOF)
+		if(error == ERROR_HANDLE_EOF) {
+			free(lpBuffer);
+			(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+			CloseEventLog(hEventLog);
 			return NULL;
+		}
 
 		if(error == ERROR_INSUFFICIENT_BUFFER) {
 			fwprintf(stderr, L"Error in ReadEventLog: 0x%x\n", error);
+			free(lpBuffer);
+			(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+			CloseEventLog(hEventLog);
 			return NULL;
 		}
 
 		tempBuffer = (LPVOID)realloc(lpBuffer, nNumberOfBytesToRead);
 		if(tempBuffer == NULL) {
 			fwprintf(stderr, L"Failed to reallocate the memory for the record buffer (%d bytes)\n", pnMinNumberOfBytesNeeded);
+			free(lpBuffer);
+			(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+			CloseEventLog(hEventLog);
 			return NULL;
 		}
 		lpBuffer = tempBuffer;
@@ -157,26 +182,36 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog(JNI
 			DWORD error = GetLastError();
 			LPVOID tempBuffer = NULL;
 
-			if(error == ERROR_HANDLE_EOF)
+			if(error == ERROR_HANDLE_EOF) {
+				free(lpBuffer);
+				(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+				CloseEventLog(hEventLog);
 				return NULL;
+			}
 
 			if(error == ERROR_INSUFFICIENT_BUFFER) {
 				fwprintf(stderr, L"Error in ReadEventLog: 0x%x\n", error);
+				free(lpBuffer);
+				(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+				CloseEventLog(hEventLog);
 				return NULL;
 			}
 
 			tempBuffer = (LPVOID)realloc(lpBuffer, nNumberOfBytesToRead);
 			if(tempBuffer == NULL) {
 				fwprintf(stderr, L"Failed to reallocate the memory for the record buffer (%d bytes)\n", pnMinNumberOfBytesNeeded);
+				free(lpBuffer);
+				(*env)->ReleaseStringChars(env, jLogName, lpLogName);
+				CloseEventLog(hEventLog);
 				return NULL;
 			}
 			lpBuffer = tempBuffer;
 		}
 
 		if(pnBytesRead == 0 || ((PEVENTLOGRECORD)lpBuffer)->RecordNumber < (DWORD)begin) { 
+			free(lpBuffer);
 			(*env)->ReleaseStringChars(env, jLogName, lpLogName);
-			if(lpBuffer)
-				free(lpBuffer);
+			CloseEventLog(hEventLog);
 
 			return NULL;
 		}
@@ -237,6 +272,8 @@ jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record)
 			free(lpDomain);
 		} else {
 			user = (*env)->NewString(env, lpName, (jsize)wcslen(lpName));
+			free(lpName);
+			free(lpDomain);
 		}
 	}
 
@@ -317,8 +354,11 @@ LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 		return NULL;
 
 	RegQueryValueEx(hKey, lpValueName, NULL, NULL, NULL, &lpcbData);
-	if(lpcbData == 0)
+	if(lpcbData == 0) {
+		free(lpSubKey);
+		RegCloseKey(hKey);
 		return NULL;
+	}
 	lpSrc = (LPBYTE)malloc(lpcbData);
 	RegQueryValueEx(hKey, lpValueName, NULL, NULL, lpSrc, &lpcbData);
 	RegCloseKey(hKey);
@@ -328,6 +368,7 @@ LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 	ExpandEnvironmentStrings((LPCTSTR)lpSrc, (LPTSTR)lpFileName, nSize);
 
 	hResource = LoadLibrary(lpFileName);
+	free(lpSubKey);
 
 	return (LPCVOID)hResource;
 }

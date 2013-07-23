@@ -34,8 +34,10 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getTcpC
 		tcpTable = (PMIB_TCPTABLE_OWNER_PID) malloc(dwSize);
 		ret = GetExtendedTcpTable(tcpTable, &dwSize, TRUE, isIpv4 ? AF_INET : AF_INET6, TCP_TABLE_OWNER_PID_ALL, 0);
 	}
-	if(ret != NO_ERROR)
+	if(ret != NO_ERROR) {
+		free(tcpTable);
 		return (*env)->NewObjectArray(env, 0, clzTcpStat, NULL);
+	}
 
 	stats = (*env)->NewObjectArray(env, tcpTable->dwNumEntries, clzTcpStat, NULL);
 	for(i=0; i<tcpTable->dwNumEntries; i++) {
