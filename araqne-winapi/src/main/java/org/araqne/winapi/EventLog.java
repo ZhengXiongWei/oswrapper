@@ -17,6 +17,7 @@ package org.araqne.winapi;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class EventLog {
 	static {
@@ -51,7 +52,7 @@ public class EventLog {
 	}
 
 	private Date toDate(int seconds) {
-		Calendar c = Calendar.getInstance();
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 		c.set(Calendar.YEAR, 1970);
 		c.set(Calendar.MONDAY, 0);
 		c.set(Calendar.DAY_OF_MONTH, 1);
