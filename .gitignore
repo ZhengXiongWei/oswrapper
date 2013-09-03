@@ -11,3 +11,5 @@ x64
 *.sdf
 *.opensdf
 *.suo
+*.versionsBackup
+winapi.dll

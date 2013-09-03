@@ -247,10 +247,24 @@ jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record)
 	jint written = record->TimeWritten;
 	jstring sourceName = (*env)->NewString(env, lpSourceName, (jsize)wcslen(lpSourceName));
 	jstring eventCategory = lpEventCategory ? (*env)->NewString(env, lpEventCategory, (jsize)wcslen(lpEventCategory)) : NULL;
+
 	jbyteArray sid = NULL;
 	jstring user = NULL;
 	jobject message = lpMessage ? (*env)->NewString(env, lpMessage, (jsize)wcslen(lpMessage)) : NULL;
+	
 	jbyteArray data = NULL;
+
+	if (lpEventCategory != NULL) 
+	{
+		LocalFree(lpEventCategory);
+		lpEventCategory = NULL;
+	}
+
+	if (lpMessage != NULL)
+	{
+		LocalFree(lpMessage);
+		lpMessage = NULL;
+	}
 
 	if(record->UserSidLength > 0) {
 		LPTSTR lpName = NULL;
@@ -266,15 +280,15 @@ jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record)
 
 		lpName = (LPTSTR)malloc(sizeof(TCHAR)*dwNameSize);
 		lpDomain = (LPTSTR)malloc(sizeof(TCHAR)*dwDomainSize);
+
 		if(!LookupAccountSid(NULL, (PSID)((PBYTE)record+record->UserSidOffset), lpName, &dwNameSize, lpDomain, &dwDomainSize, &nUse)) {
-			fprintf(stderr, "Error in LookupAccountSid: 0x%x\n", GetLastError());
-			free(lpName);
-			free(lpDomain);
+			fprintf(stderr, "Error in LookupAccountSid: 0x%x\n", GetLastError());			
 		} else {
 			user = (*env)->NewString(env, lpName, (jsize)wcslen(lpName));
-			free(lpName);
-			free(lpDomain);
 		}
+
+		free(lpName);
+		free(lpDomain);
 	}
 
 	if(record->DataLength > 0) {
@@ -351,7 +365,10 @@ LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 	StringCbPrintf(lpSubKey, nSubKeySize, L"SYSTEM\\CurrentControlSet\\services\\eventlog\\%s\\%s", lpLogName, lpSourceName);
 
 	if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_READ, &hKey) != 0 )
+	{
+		free(lpSubKey);
 		return NULL;
+	}
 
 	RegQueryValueEx(hKey, lpValueName, NULL, NULL, NULL, &lpcbData);
 	if(lpcbData == 0) {
@@ -359,6 +376,7 @@ LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 		RegCloseKey(hKey);
 		return NULL;
 	}
+
 	lpSrc = (LPBYTE)malloc(lpcbData);
 	RegQueryValueEx(hKey, lpValueName, NULL, NULL, lpSrc, &lpcbData);
 	RegCloseKey(hKey);
@@ -368,6 +386,8 @@ LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 	ExpandEnvironmentStrings((LPCTSTR)lpSrc, (LPTSTR)lpFileName, nSize);
 
 	hResource = LoadLibrary(lpFileName);
+	free((void*)lpFileName);
+	free(lpSrc);
 	free(lpSubKey);
 
 	return (LPCVOID)hResource;
