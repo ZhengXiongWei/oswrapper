@@ -41,7 +41,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog
 jobject getEventLogObject(JNIEnv *, LPTSTR, PEVENTLOGRECORD);
 LPTSTR getEventType(WORD);
 LPTSTR getMessageString(LPTSTR, LPTSTR, LPTSTR, DWORD, WORD, LPTSTR);
-LPCVOID getResource(LPTSTR, LPTSTR, LPTSTR);
+LPTSTR getResource(LPTSTR, LPTSTR, LPTSTR);
 
 #ifdef __cplusplus
 }

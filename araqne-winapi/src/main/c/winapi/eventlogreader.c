@@ -46,7 +46,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readAllEventLogs
 	hEventLog = OpenEventLog(NULL, lpLogName);
 
 	if(hEventLog == NULL) {
-		fwprintf(stderr, L"Error in OpenEventLog: 0x%x\n", GetLastError());
+//		fwprintf(stderr, L"Error in OpenEventLog: 0x%x\n", GetLastError());
 		free(lpBuffer);
 		(*env)->ReleaseStringChars(env, jLogName, lpLogName);
 		return 0;
@@ -250,9 +250,10 @@ jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record)
 
 	jbyteArray sid = NULL;
 	jstring user = NULL;
-	jobject message = lpMessage ? (*env)->NewString(env, lpMessage, (jsize)wcslen(lpMessage)) : NULL;
+	jobject message = NULL;
 	
 	jbyteArray data = NULL;
+	message = lpMessage ? (*env)->NewString(env, lpMessage, (jsize)wcslen(lpMessage)) : NULL;
 
 	if (lpEventCategory != NULL) 
 	{
@@ -320,12 +321,36 @@ LPTSTR getMessageString(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueNam
 	LPCVOID lpSource = NULL;
 	DWORD dwLanguageId = MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT);
 	LPTSTR lpBuffer = NULL;
+	wchar_t *pch = NULL;
+	wchar_t seps[] = L";";
+	wchar_t *context = NULL;
+
 	void **Arguments = NULL;
 	WORD i;
+	int index = 0;
+	int allocIndex = 0;
+	int freeIndex = 0;
 
-	lpSource = getResource(lpLogName, lpSourceName, lpValueName);
-	if(!lpSource)
+	// semicolon separated paths
+	LPCTSTR lpFileNames = NULL;
+	HANDLE hResources[100];
+
+	memset(hResources, 0, sizeof(hResources));
+
+	lpFileNames = getResource(lpLogName, lpSourceName, lpValueName);
+	if(!lpFileNames) {
+//		fwprintf(stderr, L"getResource failed\n");
 		return NULL;
+	}
+
+	pch = wcstok_s(lpFileNames, seps, &context);
+	while (pch != NULL){
+		if (allocIndex >= 100)
+			break;
+
+		hResources[allocIndex++] = LoadLibrary(pch);
+		pch = wcstok_s(NULL, seps, &context);
+	}
 
 	if(numStrings > 0) {
 		Arguments = (void**)malloc(sizeof(void*)*numStrings * 2);
@@ -334,25 +359,29 @@ LPTSTR getMessageString(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueNam
 			*(Arguments + i) = (void*)pStrings;
 			pStrings += wcslen(pStrings) + 1;
 		}		
-	}
-	
-	if(!FormatMessage(dwFlags, lpSource, dwMessageId, dwLanguageId, (LPTSTR)&lpBuffer, 0, (va_list*)Arguments)) {
-		 //fwprintf(stderr, L"Error in FormatMessage: 0x%x, %s(%d)\n", GetLastError(), lpSourceName, dwMessageId);
-		 //return NULL;
 	}	
 
+	for (index = 0; index < allocIndex; index++) {
+		if(FormatMessage(dwFlags, hResources[index], dwMessageId, dwLanguageId, (LPTSTR)&lpBuffer, 0, (va_list*)Arguments))
+			break;
+		//else
+		//	fwprintf(stderr, L"Error in FormatMessage: 0x%x, %s(%d)\n", GetLastError(), lpSourceName, dwMessageId);
+	}
 
-	FreeLibrary((HMODULE)lpSource);
+	for (freeIndex = 0; freeIndex < allocIndex; freeIndex++)
+		FreeLibrary(hResources[freeIndex]);
 
 	if(Arguments)
 		free(Arguments);
 
+	free((void*)lpFileNames);
+
 	return lpBuffer;
 }
 
-LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
+LPTSTR getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 	HANDLE hResource = NULL;
-	LPCTSTR lpFileName = NULL;
+	LPTSTR lpFileName = NULL;
 	LPBYTE lpSrc = NULL;
 	DWORD nSize = 0;
 	HKEY hKey;
@@ -366,12 +395,14 @@ LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 
 	if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_READ, &hKey) != 0 )
 	{
+//		fwprintf(stderr, L"cannot open sub key\n");
 		free(lpSubKey);
 		return NULL;
 	}
 
 	RegQueryValueEx(hKey, lpValueName, NULL, NULL, NULL, &lpcbData);
 	if(lpcbData == 0) {
+//		fwprintf(stderr, L"cannot query value %s\n", lpValueName);
 		free(lpSubKey);
 		RegCloseKey(hKey);
 		return NULL;
@@ -382,13 +413,14 @@ LPCVOID getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 	RegCloseKey(hKey);
 
 	nSize = ExpandEnvironmentStrings((LPCTSTR)lpSrc, NULL, 0);
-	lpFileName = (LPCTSTR)malloc(sizeof(TCHAR)*nSize);
+	lpFileName = (LPTSTR)malloc(sizeof(TCHAR)*nSize);
 	ExpandEnvironmentStrings((LPCTSTR)lpSrc, (LPTSTR)lpFileName, nSize);
 
-	hResource = LoadLibrary(lpFileName);
-	free((void*)lpFileName);
+//	hResource = LoadLibrary(lpFileName);
+//	free((void*)lpFileName);
 	free(lpSrc);
 	free(lpSubKey);
 
-	return (LPCVOID)hResource;
+//	return (LPCVOID)hResource;
+	return lpFileName;
 }

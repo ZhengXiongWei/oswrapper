@@ -59,10 +59,10 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-		    <groupId>org.apache.felix</groupId>
-		    <artifactId>org.apache.felix.ipojo.annotations</artifactId>
-		    <version>1.4.0</version>
-		    <optional>true</optional>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo.annotations</artifactId>
+			<version>1.4.0</version>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 </project>
