@@ -44,7 +44,9 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_RegistryKey_RegOpenKeyEx
 
 	ret = RegOpenKeyEx((HKEY)hkey, pValueName, 0, KEY_READ, &newKey);
 	SetIntegerRef(env, hkeyOut, (int)newKey);
-
+	
+	(*env)->ReleaseStringChars(env, valueName, pValueName);
+	
 	return ret;
 }
 
@@ -70,6 +72,7 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_RegistryKey_RegQueryValueEx
 	(*env)->SetByteArrayRegion(env, arr, 0, dwSize, buffer);
 	SetObjectRef(env, bufferOut, arr);
 
+	(*env)->ReleaseStringChars(env, valueName, pValueName);
 	free(buffer);
 	return ret;
 }
