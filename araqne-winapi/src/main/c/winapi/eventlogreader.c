@@ -34,6 +34,8 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readAllEventLogs
 	LPTSTR lpLogName;
 	HANDLE hEventLog;
 
+	memset(lpBuffer, 0, MAX_RECORD_BUFFER_SIZE);
+
 	if ( jLogName == (jstring)NULL )
 	{
 		jclass exceptionClass = (*env)->FindClass(env, "java/lang/NullPointerException");
@@ -119,6 +121,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog(JNI
 	LPTSTR lpLogName;
 	HANDLE hEventLog;	
 
+	memset(lpBuffer, 0, MAX_RECORD_BUFFER_SIZE);
 
 	if ( jLogName == (jstring)NULL )
 	{
@@ -282,6 +285,9 @@ jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record)
 		lpName = (LPTSTR)malloc(sizeof(TCHAR)*dwNameSize);
 		lpDomain = (LPTSTR)malloc(sizeof(TCHAR)*dwDomainSize);
 
+		memset(lpName, 0, sizeof(TCHAR)*dwNameSize);
+		memset(lpDomain, 0, sizeof(TCHAR)*dwDomainSize);
+
 		if(!LookupAccountSid(NULL, (PSID)((PBYTE)record+record->UserSidOffset), lpName, &dwNameSize, lpDomain, &dwDomainSize, &nUse)) {
 			fprintf(stderr, "Error in LookupAccountSid: 0x%x\n", GetLastError());			
 		} else {
@@ -391,6 +397,7 @@ LPTSTR getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 
 	nSubKeySize = sizeof(TCHAR)*(45+wcslen(lpLogName)+wcslen(lpSourceName));
 	lpSubKey = (LPTSTR)malloc(nSubKeySize);
+	memset(lpSubKey, 0, nSubKeySize);
 	StringCbPrintf(lpSubKey, nSubKeySize, L"SYSTEM\\CurrentControlSet\\services\\eventlog\\%s\\%s", lpLogName, lpSourceName);
 
 	if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_READ, &hKey) != 0 )
@@ -409,11 +416,14 @@ LPTSTR getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 	}
 
 	lpSrc = (LPBYTE)malloc(lpcbData);
+	memset(lpSrc, 0, lpcbData);
+
 	RegQueryValueEx(hKey, lpValueName, NULL, NULL, lpSrc, &lpcbData);
 	RegCloseKey(hKey);
 
 	nSize = ExpandEnvironmentStrings((LPCTSTR)lpSrc, NULL, 0);
 	lpFileName = (LPTSTR)malloc(sizeof(TCHAR)*nSize);
+	memset(lpFileName, 0, sizeof(TCHAR)*nSize);
 	ExpandEnvironmentStrings((LPCTSTR)lpSrc, (LPTSTR)lpFileName, nSize);
 
 //	hResource = LoadLibrary(lpFileName);

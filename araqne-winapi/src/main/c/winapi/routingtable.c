@@ -26,6 +26,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_RoutingTable_getRoutingEnt
 	DWORD i;
 
 	pIpForwardTable = (PMIB_IPFORWARDTABLE)malloc(sizeof(MIB_IPFORWARDTABLE));
+	memset(pIpForwardTable, 0, sizeof(MIB_IPFORWARDTABLE));
 	if((error = GetIpForwardTable(pIpForwardTable, &dwSize, TRUE)) != NO_ERROR) {
 		LPTSTR errorMsg = L"Error in GetIpForwardTable";
 		free(pIpForwardTable);
@@ -33,6 +34,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_RoutingTable_getRoutingEnt
 		switch(error) {
 			case ERROR_INSUFFICIENT_BUFFER:
 				pIpForwardTable = (PMIB_IPFORWARDTABLE)malloc(dwSize);
+				memset(pIpForwardTable, 0, dwSize);
 				if((error = GetIpForwardTable(pIpForwardTable, &dwSize, TRUE)) == NO_ERROR) {
 					break;
 				}

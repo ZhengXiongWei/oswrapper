@@ -31,6 +31,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_ArpCache_getArpEntries(JNI
 		return 0;
 	}
 	pIpNetTable = (PMIB_IPNETTABLE)malloc(dwSize);
+	memset(pIpNetTable, 0, dwSize);
 	GetIpNetTable(pIpNetTable, &dwSize, TRUE);
 
 	cache = (*env)->NewObjectArray(env, pIpNetTable->dwNumEntries, clzArpEntry, NULL);

@@ -28,10 +28,12 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getTcpC
 	jsize addrSize = isIpv4 ? 4 : 16;
 	WORD i;
 
+	memset(tcpTable, 0, dwSize);
 	ret = GetExtendedTcpTable(tcpTable, &dwSize, TRUE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0);
 	if(ret == ERROR_INSUFFICIENT_BUFFER) {
 		free(tcpTable);
 		tcpTable = (PMIB_TCPTABLE_OWNER_PID) malloc(dwSize);
+		memset(tcpTable, 0, dwSize);
 		ret = GetExtendedTcpTable(tcpTable, &dwSize, TRUE, isIpv4 ? AF_INET : AF_INET6, TCP_TABLE_OWNER_PID_ALL, 0);
 	}
 	if(ret != NO_ERROR) {
@@ -112,6 +114,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getUdpL
 		return NULL;
 	}
 	udpTable = (PMIB_UDPTABLE_OWNER_PID)malloc(dwSize);
+	memset(udpTable, 0, dwSize);
 	GetExtendedUdpTable(udpTable, &dwSize, TRUE, AF_INET, UDP_TABLE_OWNER_PID, 0);
 
 	stats = (*env)->NewObjectArray(env, udpTable->dwNumEntries, clzUdpStat, NULL);
@@ -121,7 +124,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_IpGlobalProperties_getUdpL
 		jbyteArray addr = (*env)->NewByteArray(env, addrSize);
 		jint port = 0;
 		jint pid = row.dwOwningPid;
-
+		
 		(*env)->SetByteArrayRegion(env, addr, 0, addrSize, (const jbyte *)&row.dwLocalAddr);
 		port = ((row.dwLocalPort & 0xff) << 8) | ((row.dwLocalPort & 0xff00) >> 8);
 

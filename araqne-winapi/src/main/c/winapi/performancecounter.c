@@ -31,6 +31,8 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getMach
 	}
 
 	lpMachineNameList = (LPTSTR)malloc(sizeof(TCHAR)*dwBufferLength);
+	memset(lpMachineNameList, 0, sizeof(TCHAR)*dwBufferLength);
+
 	stat = PdhEnumMachines(NULL, lpMachineNameList, &dwBufferLength);
 	if(stat != ERROR_SUCCESS) {
 		free(lpMachineNameList);
@@ -70,6 +72,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_getCate
 	}
 
 	lpCategoryNameList = (LPTSTR)malloc(sizeof(TCHAR)*dwBufferLength);
+	memset(lpCategoryNameList, 0, sizeof(TCHAR)*dwBufferLength);
 	stat = PdhEnumObjects(NULL, machineName, lpCategoryNameList, &dwBufferLength, detail, TRUE);
 	if(stat != ERROR_SUCCESS) {
 		free(lpCategoryNameList);
@@ -116,6 +119,10 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_PerformanceCounter_getCounters(
 
 	lpCounterList = (LPTSTR)malloc(sizeof(TCHAR)*dwCounterListLength);
 	lpInstanceList = (LPTSTR)malloc(sizeof(TCHAR)*dwInstanceListLength);
+
+	memset(lpCounterList, 0, sizeof(TCHAR)*dwCounterListLength);
+	memset(lpInstanceList, 0, sizeof(TCHAR)*dwInstanceListLength);
+
 	stat = PdhEnumObjectItems(NULL, machineName, categoryName, lpCounterList, &dwCounterListLength, lpInstanceList, &dwInstanceListLength, detail, 0);
 	(*env)->ReleaseStringChars(env, category, categoryName);
 	if(machineName)
@@ -218,6 +225,8 @@ JNIEXPORT jint JNICALL Java_org_araqne_winapi_PerformanceCounter_addCounterN(JNI
 	}
 
 	counterPath = (LPTSTR)malloc(sizeof(TCHAR)*dwSize);
+	memset(counterPath, 0, sizeof(TCHAR)*dwSize);
+
 	stat = PdhMakeCounterPath(&pathElement, counterPath, &dwSize, 0);
 	(*env)->ReleaseStringChars(env, category, pathElement.szObjectName);
 	(*env)->ReleaseStringChars(env, counter, pathElement.szCounterName);
@@ -313,6 +322,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_PerformanceCounter_expandC
 		stat = PdhExpandCounterPathW(strPath, NULL, &dwBufferLength);
 		if (stat == PDH_MORE_DATA) {
 			lpCounterList = (LPTSTR) malloc(dwBufferLength * sizeof(TCHAR));
+			memset(lpCounterList, 0, dwBufferLength * sizeof(TCHAR));
 			stat = PdhExpandCounterPathW(strPath, lpCounterList, &dwBufferLength);
 			if (stat != ERROR_SUCCESS) {
 				(*env)->ReleaseStringChars(env, path, strPath);
