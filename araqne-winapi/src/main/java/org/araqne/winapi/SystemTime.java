@@ -15,8 +15,6 @@
  */
 package org.araqne.winapi;
 
-import java.util.Date;
-
 public class SystemTime {
 	private int idlePercent;
 	private int kernelPercent;
@@ -41,11 +39,11 @@ public class SystemTime {
 		long idleTime = second[0] - first[0];
 		long kernelTime = second[1] - first[1];
 		long userTime = second[2] - first[2];
-		
+
 		long systemTime = kernelTime + userTime;
-		
+
 		kernelTime = kernelTime - idleTime;
-				
+
 		if (kernelTime < 0)
 			kernelTime = 0;
 
