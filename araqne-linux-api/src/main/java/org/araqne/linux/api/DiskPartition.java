@@ -3,6 +3,7 @@ package org.araqne.linux.api;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,20 +50,39 @@ public class DiskPartition {
 	}
 
 	public static List<DiskPartition> getDiskPartitions() {
+		List<String> lines = readPartitions();
+		return getDiskPartitions(lines);
+	}
+
+	public static List<DiskPartition> getDiskPartitions(List<String> lines) {
 		List<DiskPartition> stats = new ArrayList<DiskPartition>();
+
+		for (int index = 0; index < lines.size(); index++) {
+			String line = lines.get(index);
+			String[] parts = line.split("[ ]+");
+			while (parts.length != 6) {
+				line += " " + lines.get(++index);
+				parts = line.split("[ ]+");
+			}
+
+			stats.add(getDiskStat(parts));
+		}
+		return stats;
+	}
+
+	private static List<String> readPartitions() {
 		java.lang.Process p = null;
 		BufferedReader br = null;
+		List<String> lines = new ArrayList<String>();
 		try {
 			p = Runtime.getRuntime().exec("df");
-			// TODO charset
-			br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			br = new BufferedReader(new InputStreamReader(p.getInputStream(), Charset.forName("utf-8")));
 			br.readLine();
 			String line = null;
 			while ((line = br.readLine()) != null) {
-				stats.add(getDiskStat(line));
+				lines.add(line);
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
 		} finally {
 			if (p != null)
 				p.destroy();
@@ -72,11 +92,10 @@ public class DiskPartition {
 				} catch (IOException e) {
 				}
 		}
-		return stats;
+		return lines;
 	}
 
-	public static DiskPartition getDiskStat(String line) {
-		String[] parts = line.split("[ ]+");
+	private static DiskPartition getDiskStat(String[] parts) {
 		DiskPartition stat = new DiskPartition();
 		stat.setName(parts[0]);
 		stat.setUsed(Long.valueOf(parts[2]));
