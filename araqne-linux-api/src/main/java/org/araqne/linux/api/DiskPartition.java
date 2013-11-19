@@ -98,8 +98,8 @@ public class DiskPartition {
 	private static DiskPartition getDiskStat(String[] parts) {
 		DiskPartition stat = new DiskPartition();
 		stat.setName(parts[0]);
-		stat.setUsed(Long.valueOf(parts[2]));
-		stat.setAvailable(Long.valueOf(parts[3]));
+		stat.setUsed(Long.valueOf(parts[2]) * 1024);
+		stat.setAvailable(Long.valueOf(parts[3]) * 1024);
 		stat.setPath(parts[5]);
 		return stat;
 	}
