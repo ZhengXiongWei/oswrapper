@@ -13,3 +13,4 @@ x64
 *.suo
 *.versionsBackup
 winapi.dll
+git.properties
