@@ -19,10 +19,10 @@ public class DiskPartitionTest {
 
 		DiskPartition partition = partitions.get(0);
 		assertEquals("/dev/sda1", partition.getName());
-		assertEquals(3609496l, partition.getAvailable());
+		assertEquals(3609496l * 1024, partition.getAvailable());
 		assertEquals("/", partition.getPath());
-		assertEquals(8685176l, partition.getTotal());
-		assertEquals(5075680l, partition.getUsed());
+		assertEquals(8685176l * 1024, partition.getTotal());
+		assertEquals(5075680l * 1024, partition.getUsed());
 	}
 
 	@Test
@@ -37,9 +37,9 @@ public class DiskPartitionTest {
 
 		DiskPartition partition = partitions.get(0);
 		assertEquals("/dev/mapper/vg_linux-lv_root", partition.getName());
-		assertEquals(5728100l, partition.getAvailable());
+		assertEquals(5728100l * 1024, partition.getAvailable());
 		assertEquals("/", partition.getPath());
-		assertEquals(51085108l, partition.getTotal());
-		assertEquals(45357008l, partition.getUsed());
+		assertEquals(51085108l * 1024, partition.getTotal());
+		assertEquals(45357008l * 1024, partition.getUsed());
 	}
 }
