@@ -47,9 +47,9 @@ public class SystemTime {
 		if (kernelTime < 0)
 			kernelTime = 0;
 
-		idlePercent = (int) (((double) idleTime) / systemTime * 100);
-		kernelPercent = (int) (((double) kernelTime) / systemTime * 100);
-		userPercent = (int) (((double) userTime) / systemTime * 100);
+		idlePercent = (int) Math.round(((double) idleTime) / systemTime * 100);
+		kernelPercent = (int) Math.round(((double) kernelTime) / systemTime * 100);
+		userPercent = (int) Math.round(((double) userTime) / systemTime * 100);
 	}
 
 	private native long[] getSystemTimes();
