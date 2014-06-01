@@ -29,11 +29,9 @@ public class SystemTime {
 	}
 
 	public SystemTime(int interval) throws InterruptedException {
-		long begin = System.currentTimeMillis();
 		long[] first = getSystemTimes();
 		Thread.sleep(interval);
 		long[] second = getSystemTimes();
-		long end = System.currentTimeMillis();
 
 		// unit: 100 nano seconds
 		long idleTime = second[0] - first[0];
@@ -47,9 +45,9 @@ public class SystemTime {
 		if (kernelTime < 0)
 			kernelTime = 0;
 
-		idlePercent = (int) Math.round(((double) idleTime) / systemTime * 100);
 		kernelPercent = (int) Math.round(((double) kernelTime) / systemTime * 100);
 		userPercent = (int) Math.round(((double) userTime) / systemTime * 100);
+		idlePercent = 100 - userPercent - kernelPercent;
 	}
 
 	private native long[] getSystemTimes();
