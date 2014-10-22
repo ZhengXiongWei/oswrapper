@@ -57,7 +57,11 @@ public class DiskPartition {
 	}
 
 	public static List<DiskPartition> getDiskPartitions() {
-		List<String> lines = readPartitions();
+		return getDiskPartitions(false);
+	}
+
+	public static List<DiskPartition> getDiskPartitions(boolean localOnly) {
+		List<String> lines = readPartitions(localOnly);
 		return parseDiskPartitions(lines);
 	}
 
@@ -132,12 +136,13 @@ public class DiskPartition {
 		return headers;
 	}
 
-	private static List<String> readPartitions() {
+	private static List<String> readPartitions(boolean localOnly) {
 		java.lang.Process p = null;
 		BufferedReader br = null;
 		List<String> lines = new ArrayList<String>();
 		try {
-			p = Runtime.getRuntime().exec("df");
+			p = Runtime.getRuntime().exec(localOnly ? "df -l" : "df");
+
 			br = new BufferedReader(new InputStreamReader(p.getInputStream(), Charset.forName("utf-8")));
 			String line = null;
 			while ((line = br.readLine()) != null) {
