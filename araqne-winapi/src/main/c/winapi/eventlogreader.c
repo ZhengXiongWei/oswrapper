@@ -221,6 +221,7 @@ JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogReader_readEventLog(JNI
 	}
 
 	record = getEventLogObject(env, lpLogName, (PEVENTLOGRECORD)lpBuffer);
+
 	(*env)->ReleaseStringChars(env, jLogName, lpLogName);
 
 	if(lpBuffer)
@@ -237,25 +238,31 @@ jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record)
 	jclass clzEventLog = (*env)->FindClass(env, "org/araqne/winapi/EventLog");
 	jmethodID eventLogInit = (*env)->GetMethodID(env, clzEventLog, "<init>", "(IILorg/araqne/winapi/EventType;IILjava/lang/String;Ljava/lang/String;[BLjava/lang/String;Ljava/lang/String;[B)V");
 
-	LPTSTR lpEventType = getEventType(record->EventType);
-	LPTSTR lpSourceName = (LPTSTR)((PBYTE)&(record->DataOffset)+4);
-	LPTSTR lpEventCategory = getMessageString(lpLogName, lpSourceName, L"CategoryMessageFile", record->EventCategory, 0, NULL);
-	LPTSTR pStrings = (LPTSTR)((PBYTE)record+record->StringOffset);
-	LPTSTR lpMessage = getMessageString(lpLogName, lpSourceName, L"EventMessageFile", record->EventID, record->NumStrings, pStrings);
-
-	jint recordNumber = record->RecordNumber;
-	jint eventId = record->EventID & 0xFFFF;
-	jobject eventType = (*env)->NewString(env, lpEventType, (jsize)wcslen(lpEventType));
-	jint generated = record->TimeGenerated;
-	jint written = record->TimeWritten;
-	jstring sourceName = (*env)->NewString(env, lpSourceName, (jsize)wcslen(lpSourceName));
-	jstring eventCategory = lpEventCategory ? (*env)->NewString(env, lpEventCategory, (jsize)wcslen(lpEventCategory)) : NULL;
+	LPTSTR lpEventType, lpSourceName, lpEventCategory, pStrings, lpMessage;
+	jint recordNumber, eventId, generated, written;
+	jobject eventType;
+	jstring sourceName, eventCategory;
 
 	jbyteArray sid = NULL;
 	jstring user = NULL;
 	jobject message = NULL;
 	
 	jbyteArray data = NULL;
+	
+	lpEventType = getEventType(record->EventType);
+	lpSourceName = (LPTSTR)((PBYTE)&(record->DataOffset)+4);
+	lpEventCategory = getMessageString(lpLogName, lpSourceName, L"CategoryMessageFile", record->EventCategory, 0, NULL);
+
+	pStrings = (LPTSTR)((PBYTE)record+record->StringOffset);
+	lpMessage = getMessageString(lpLogName, lpSourceName, L"EventMessageFile", record->EventID, record->NumStrings, pStrings);
+
+	recordNumber = record->RecordNumber;
+	eventId = record->EventID & 0xFFFF;
+	eventType = (*env)->NewString(env, lpEventType, (jsize)wcslen(lpEventType));
+	generated = record->TimeGenerated;
+	written = record->TimeWritten;
+	sourceName = (*env)->NewString(env, lpSourceName, (jsize)wcslen(lpSourceName));
+	eventCategory = lpEventCategory ? (*env)->NewString(env, lpEventCategory, (jsize)wcslen(lpEventCategory)) : NULL;
 	message = lpMessage ? (*env)->NewString(env, lpMessage, (jsize)wcslen(lpMessage)) : NULL;
 
 	if (lpEventCategory != NULL) 
@@ -297,7 +304,6 @@ jobject getEventLogObject(JNIEnv *env, LPTSTR lpLogName, PEVENTLOGRECORD record)
 		free(lpName);
 		free(lpDomain);
 	}
-
 	if(record->DataLength > 0) {
 		data = (*env)->NewByteArray(env, record->DataLength);
 		(*env)->SetByteArrayRegion(env, data, 0, record->DataLength, (PBYTE)record+record->DataOffset);
@@ -358,9 +364,9 @@ LPTSTR getMessageString(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueNam
 		pch = wcstok_s(NULL, seps, &context);
 	}
 
-	if(numStrings > 0) {
-		Arguments = (void**)malloc(sizeof(void*)*numStrings * 2);
-		memset(Arguments, 0, sizeof(void*)*numStrings * 2);
+	if(numStrings >= 0) {
+		Arguments = (void**)malloc(sizeof(void*)*(numStrings + 20));
+		memset(Arguments, 0, sizeof(void*)*(numStrings + 20));
 		for(i=0; i<numStrings; i++) {
 			*(Arguments + i) = (void*)pStrings;
 			pStrings += wcslen(pStrings) + 1;
@@ -400,11 +406,17 @@ LPTSTR getResource(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueName) {
 	memset(lpSubKey, 0, nSubKeySize);
 	StringCbPrintf(lpSubKey, nSubKeySize, L"SYSTEM\\CurrentControlSet\\services\\eventlog\\%s\\%s", lpLogName, lpSourceName);
 
-	if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_READ, &hKey) != 0 )
-	{
-//		fwprintf(stderr, L"cannot open sub key\n");
-		free(lpSubKey);
-		return NULL;
+	if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_READ, &hKey) != 0 ) {
+		// fallback to System
+		StringCbPrintf(lpSubKey, nSubKeySize, L"SYSTEM\\CurrentControlSet\\services\\eventlog\\System\\%s", lpSourceName);
+		if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_READ, &hKey) != 0 ) {
+			// fallback to Application
+			StringCbPrintf(lpSubKey, nSubKeySize, L"SYSTEM\\CurrentControlSet\\services\\eventlog\\Application\\%s", lpSourceName);
+			if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_READ, &hKey) != 0 ) {
+				free(lpSubKey);
+				return NULL;
+			}
+		}
 	}
 
 	RegQueryValueEx(hKey, lpValueName, NULL, NULL, NULL, &lpcbData);
