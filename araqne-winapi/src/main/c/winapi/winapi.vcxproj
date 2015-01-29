@@ -202,6 +202,7 @@ copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86_64
   <ItemGroup>
     <ClCompile Include="adapterinfo.c" />
     <ClCompile Include="arpcache.c" />
+    <ClCompile Include="eventApi.c" />
     <ClCompile Include="eventlogreader.c" />
     <ClCompile Include="ipglobalproperties.c" />
     <ClCompile Include="jni_common.c" />
@@ -215,6 +216,7 @@ copy $(TargetDir)$(TargetName).pdb $(ProjectDir)..\..\resources\lib\win32_x86_64
   <ItemGroup>
     <ClInclude Include="AdapterInfo.h" />
     <ClInclude Include="ArpCache.h" />
+    <ClInclude Include="EventApi.h" />
     <ClInclude Include="EventLogReader.h" />
     <ClInclude Include="IpGlobalProperties.h" />
     <ClInclude Include="jni_common.h" />
