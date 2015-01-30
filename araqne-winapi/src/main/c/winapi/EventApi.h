@@ -37,7 +37,15 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventApi_read
  * Signature: ()Ljava/util/List;
  */
 JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventApi_getChannelPaths
-  (JNIEnv *, jobject);
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_araqne_winapi_EventApi
+ * Method:    lookupAccountSid
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventApi_lookupAccountSid
+  (JNIEnv *, jclass, jstring);
 
 #ifdef __cplusplus
 }

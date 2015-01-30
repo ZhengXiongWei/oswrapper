@@ -682,3 +682,43 @@ cleanup:
 
 	return objArrayList;
 }
+
+JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventApi_lookupAccountSid
+  (JNIEnv *env, jclass jobj, jstring sid)
+{
+	LPTSTR lpName = NULL;
+	LPTSTR lpDomain = NULL;
+	DWORD dwNameSize = 0;
+	DWORD dwDomainSize = 0;
+	SID_NAME_USE nUse;
+	LPCWSTR StringSid = (LPCWSTR) (*env)->GetStringChars(env, sid, JNI_FALSE);
+	PSTR Sid = NULL;
+	jobject user, domain;
+	jobjectArray joa = NULL;
+
+	ConvertStringSidToSid( StringSid, &Sid );
+	if ( Sid == NULL )
+		return NULL;
+
+	LookupAccountSid(NULL, Sid, NULL, &dwNameSize, NULL, &dwDomainSize, &nUse);
+
+	lpName = (LPTSTR)malloc(sizeof(TCHAR)*dwNameSize);
+	lpDomain = (LPTSTR)malloc(sizeof(TCHAR)*dwDomainSize);
+
+	memset(lpName, 0, sizeof(TCHAR)*dwNameSize);
+	memset(lpDomain, 0, sizeof(TCHAR)*dwDomainSize);
+
+	if(!LookupAccountSid(NULL, Sid, lpName, &dwNameSize, lpDomain, &dwDomainSize, &nUse)) {
+		fprintf(stderr, "Error in LookupAccountSid: 0x%x\n", GetLastError());
+	} else {
+		joa = (*env)->NewObjectArray( env, 2, (*env)->FindClass( env, "java/lang/String" ), NULL );
+		(*env)->SetObjectArrayElement( env, joa, 0, (*env)->NewString(env, lpName, (jsize)wcslen(lpName)) );
+		(*env)->SetObjectArrayElement( env, joa, 1, (*env)->NewString(env, lpDomain, (jsize)wcslen(lpDomain)) );
+	}
+
+	LocalFree( Sid );
+	free(lpName);
+	free(lpDomain);
+
+	return joa;
+}

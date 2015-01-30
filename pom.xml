@@ -23,7 +23,7 @@
 		<repository>
 			<id>araqne</id>
 			<name>Araqne</name>
-			<url>scp://staging.araqne.org:2222/home/service/araqne/</url>
+			<url>sftp://staging.araqne.org:2222/home/service/araqne/</url>
 		</repository>
 	</distributionManagement>
 

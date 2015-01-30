@@ -14,6 +14,7 @@ public class EventApi {
 	private native void close(long handle);
 	private native String[] read(long handle, int timeout);
 	public native static List<String> getChannelPaths();
+	public native static String[] lookupAccountSid(String sid);
 
 	private long handle;
 	private int timeout;
@@ -37,6 +38,20 @@ public class EventApi {
 
 	public static void main(String argv[]) {
 		System.out.println("Hello, world");
+		String[] sid = EventApi.lookupAccountSid("S-1-5-18");
+		if ( sid == null )
+			System.out.println( "lookupAccountSid error" );
+		else {
+			System.out.println( sid[0] );
+			System.out.println( sid[1] );
+		}
+		
+		try {
+			System.in.read();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		List<String> channelPaths = EventApi.getChannelPaths();
 		for( Iterator<String> itr = channelPaths.iterator(); itr.hasNext(); )
