@@ -6,6 +6,7 @@ import org.araqne.api.Script;
 import org.araqne.api.ScriptArgument;
 import org.araqne.api.ScriptContext;
 import org.araqne.api.ScriptUsage;
+import org.araqne.winapi.EventApi;
 import org.araqne.winapi.EventLog;
 import org.araqne.winapi.EventLogReader;
 import org.araqne.winapi.RegistryKey;
@@ -16,6 +17,11 @@ public class WinapiScript implements Script {
 	@Override
 	public void setScriptContext(ScriptContext context) {
 		this.context = context;
+	}
+
+	public void eventChannels(String[] args) {
+		for (String path : EventApi.getChannelPaths())
+			context.println(path);
 	}
 
 	public void eventSources(String[] args) {
@@ -35,8 +41,7 @@ public class WinapiScript implements Script {
 
 	}
 
-	@ScriptUsage(description = "print recent event logs", arguments =
-			@ScriptArgument(name = "source name", type = "string", description = "event source name"))
+	@ScriptUsage(description = "print recent event logs", arguments = @ScriptArgument(name = "source name", type = "string", description = "event source name"))
 	public void eventLogs(String[] args) {
 		EventLogReader reader = new EventLogReader(args[0]);
 		Iterator<EventLog> it = reader.iterator();

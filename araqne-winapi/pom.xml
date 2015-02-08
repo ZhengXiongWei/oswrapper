@@ -9,38 +9,11 @@
 		<version>1.0.0</version>
 	</parent>
 	<artifactId>araqne-winapi</artifactId>
-	<version>1.0.8</version>
+	<version>1.0.9</version>
 	<packaging>bundle</packaging>
 	<name>Araqne WinApi</name>
 	<build>
 		<plugins>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-2</version>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>org.araqne.winapi.Test</mainClass>
-						</manifest>
-						<manifestEntries>
-							<Premain-Class>org.araqne.winapi.Test</Premain-Class>
-							<Araqne-Version>${project.version}</Araqne-Version>
-						</manifestEntries>
-					</archive>
-					<descriptors>
-						<descriptor>src/main/assembly/src.xml</descriptor>
-					</descriptors>
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
@@ -79,7 +52,7 @@
 					<execution>
 						<goals>
 							<goal>revision</goal>
-						 </goals>
+						</goals>
 					</execution>
 				</executions>
 

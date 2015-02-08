@@ -10,7 +10,6 @@ import org.araqne.api.ScriptFactory;
 @Provides
 public class WinapiScriptFactory implements ScriptFactory {
 
-	@SuppressWarnings("unused")
 	@ServiceProperty(name = "alias", value = "winapi")
 	private String alias;
 
