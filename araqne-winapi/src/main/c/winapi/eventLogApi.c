@@ -4,7 +4,7 @@
 #include <winevt.h>
 
 #include <jni.h>
-#include "EventApi.h"
+#include "EventLogApi.h"
 
 #define maxlog 128
 
@@ -197,14 +197,14 @@ static int loadLibrary( JNIEnv *env )
 	return 0;
 }
 
-struct eventapi_t {
+struct EventLogApi_t {
 	HANDLE hSignal;
     EVT_HANDLE hSubscription;
     EVT_HANDLE hBookmark;
 	EVT_HANDLE hRender;
 };
 
-JNIEXPORT jlong JNICALL Java_org_araqne_winapi_EventApi_subscribe
+JNIEXPORT jlong JNICALL Java_org_araqne_winapi_EventLogApi_subscribe
   (JNIEnv *env, jobject jobj, jstring channelPath, jstring query, jstring bookmark)
 {
 	HANDLE hSignal = CreateEvent( NULL, FALSE, FALSE, NULL );
@@ -214,7 +214,7 @@ JNIEXPORT jlong JNICALL Java_org_araqne_winapi_EventApi_subscribe
     LPWSTR pwsPath = NULL;
     LPWSTR pwsQuery = NULL;
     LPWSTR pBookmarkXml = NULL;
-	struct eventapi_t *evt;
+	struct EventLogApi_t *evt;
 	char *str;
 	int size;
 
@@ -268,7 +268,7 @@ JNIEXPORT jlong JNICALL Java_org_araqne_winapi_EventApi_subscribe
         goto cleanup;
     }
 
-	evt = (struct eventapi_t *)malloc( sizeof(struct eventapi_t) );
+	evt = (struct EventLogApi_t *)malloc( sizeof(struct EventLogApi_t) );
 	evt->hSubscription = hSubscription;
 	evt->hSignal = hSignal;
 	evt->hBookmark = hBookmark;
@@ -291,10 +291,10 @@ cleanup:
 	return 0;
 }
 
-JNIEXPORT void JNICALL Java_org_araqne_winapi_EventApi_close
+JNIEXPORT void JNICALL Java_org_araqne_winapi_EventLogApi_close
   (JNIEnv *env, jobject jobj, jlong handle)
 {
-	struct eventapi_t *evt = (struct eventapi_t *)handle;
+	struct EventLogApi_t *evt = (struct EventLogApi_t *)handle;
 
 	if ( evt == NULL )
 		return NULL;
@@ -454,7 +454,7 @@ LPWSTR GetMessageString(EVT_HANDLE hMetadata, EVT_HANDLE hEvent, EVT_FORMAT_MESS
 	return pBuffer;
 }
 
-static char *GetEventString(struct eventapi_t *evt, EVT_HANDLE hEvent)
+static char *GetEventString(struct EventLogApi_t *evt, EVT_HANDLE hEvent)
 {
 	EVT_VARIANT *var = GetProvider( evt->hRender, hEvent );
 	int len;
@@ -543,10 +543,10 @@ cleanup:
 }
 
 
-JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventApi_read
+JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventLogApi_read
   (JNIEnv *env, jobject jobj, jlong handle, jint timeout)
 {
-	struct eventapi_t *evt = (struct eventapi_t *)handle;
+	struct EventLogApi_t *evt = (struct EventLogApi_t *)handle;
 	EVT_HANDLE events[maxlog + 1];
 	DWORD out = 0, i;
 	jobjectArray joa;
@@ -594,7 +594,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventApi_read
 	return joa;
 }
 
-JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventApi_getChannelPaths
+JNIEXPORT jobject JNICALL Java_org_araqne_winapi_EventLogApi_getChannelPaths
   (JNIEnv *env, jobject jobj)
 {
 	jclass clsArrayList = (*env)->FindClass(env, "java/util/ArrayList");
@@ -683,7 +683,7 @@ cleanup:
 	return objArrayList;
 }
 
-JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventApi_lookupAccountSid
+JNIEXPORT jobjectArray JNICALL Java_org_araqne_winapi_EventLogApi_lookupAccountSid
   (JNIEnv *env, jclass jobj, jstring sid)
 {
 	LPTSTR lpName = NULL;

@@ -6,7 +6,7 @@ import org.araqne.api.Script;
 import org.araqne.api.ScriptArgument;
 import org.araqne.api.ScriptContext;
 import org.araqne.api.ScriptUsage;
-import org.araqne.winapi.EventApi;
+import org.araqne.winapi.EventLogApi;
 import org.araqne.winapi.EventLog;
 import org.araqne.winapi.EventLogReader;
 import org.araqne.winapi.RegistryKey;
@@ -20,7 +20,7 @@ public class WinapiScript implements Script {
 	}
 
 	public void eventChannels(String[] args) {
-		for (String path : EventApi.getChannelPaths())
+		for (String path : EventLogApi.getChannelPaths())
 			context.println(path);
 	}
 
