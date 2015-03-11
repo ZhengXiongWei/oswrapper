@@ -9,7 +9,7 @@
 		<version>1.0.0</version>
 	</parent>
 	<artifactId>araqne-winapi</artifactId>
-	<version>1.0.9</version>
+	<version>1.0.10</version>
 	<packaging>bundle</packaging>
 	<name>Araqne WinApi</name>
 	<build>
@@ -22,10 +22,10 @@
 					<instructions>
 						<Bundle-SymbolicName>org.araqne.winapi</Bundle-SymbolicName>
 						<Bundle-NativeCode>
-							lib/win32_x86/winapi.dll;osname=win32;osname="windows server
-							2008";processor=x86,
-							lib/win32_x86_64/winapi.dll;osname=win32;
-							osname="windows server 2008";processor=x86_64
+							lib/win32_x86/winapi.dll;osname=Win32;
+							osname="WindowsServer2012";osname="WindowsServer2008";processor=x86,
+							lib/win32_x86_64/winapi.dll;osname=Win32;
+							osname="WindowsServer2012";osname="WindowsServer2008";processor=x86_64
 						</Bundle-NativeCode>
 						<Export-Package>org.araqne.winapi;version=${project.version}</Export-Package>
 						<Private-Package>org.araqne.winapi.impl</Private-Package>
