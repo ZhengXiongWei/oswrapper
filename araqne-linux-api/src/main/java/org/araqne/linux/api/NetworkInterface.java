@@ -146,7 +146,7 @@ public class NetworkInterface {
 		return ifaces;
 	}
 
-	private static NetworkInterface parse(BufferedReader br) throws IOException {
+	public static NetworkInterface parse(BufferedReader br) throws IOException {
 		NetworkInterface iface = null;
 		String regex = "\t| {2,}";
 		String line = null;
@@ -154,51 +154,100 @@ public class NetworkInterface {
 		while ((line = br.readLine()) != null && !line.trim().equals("")) {
 			if (iface == null)
 				iface = new NetworkInterface();
+			line = line.trim();
 
-			if (iface.name == null && !line.replace("\t", " ").startsWith(" "))
-				iface.name = line.trim().replace("\t", " ").substring(0, line.trim().replace("\t", " ").indexOf(" "));
+			if (iface.name == null && !line.replace("\t", " ").startsWith(" ")) {
+				String name = line.trim().replace("\t", " ").substring(0, line.trim().replace("\t", " ").indexOf(" ")).trim();
+				if (name.endsWith(":"))
+					name = name.substring(0, name.length() - 1);
+				iface.name = name;
+			}
 
-			String[] tokens = line.trim().split(regex);
-			for (String token : tokens) {
-				if (token.contains(":")) {
-					String key = token.split(":")[0];
-					String value = token.split(":", 2)[1];
+			if (line.startsWith("RX")) {
+				if (iface.rxPacket == null)
+					iface.rxPacket = new RxPacket();
+				if (line.contains("packets"))
+					iface.rxPacket.packets = Long.parseLong(getValue(line, "packets"));
+				if (line.contains("bytes"))
+					iface.rxBytes = Long.parseLong(getValue(line, "bytes"));
+				if (line.contains("errors"))
+					iface.rxPacket.errors = Long.parseLong(getValue(line, "errors"));
+				if (line.contains("dropped"))
+					iface.rxPacket.dropped = Long.parseLong(getValue(line, "dropped"));
+				if (line.contains("overruns"))
+					iface.rxPacket.overruns = Long.parseLong(getValue(line, "overruns"));
+				if (line.contains("frame"))
+					iface.rxPacket.frame = Long.parseLong(getValue(line, "frame"));
+				if (line.contains("TX bytes")) {
+					iface.txBytes = Long.parseLong(getValue(line, "TX bytes"));
+				}
+			} else if (line.startsWith("TX")) {
+				if (iface.txPacket == null)
+					iface.txPacket = new TxPacket();
 
-					if (key.equals("Link encap"))
-						iface.linkEncap = value;
-					else if (key.equals("inet addr"))
-						iface.inet = InetAddress.getByName(value);
-					else if (key.equals("P-t-P"))
-						iface.ptp = InetAddress.getByName(value);
-					else if (key.equals("Mask"))
-						iface.mask = InetAddress.getByName(value);
-					else if (key.equals("inet6 addr")) {
-						value = value.trim();
+				if (line.contains("packets"))
+					iface.txPacket.packets = Long.parseLong(getValue(line, "packets"));
+				if (line.contains("bytes"))
+					iface.txBytes = Long.parseLong(getValue(line, "bytes"));
+				if (line.contains("errors"))
+					iface.txPacket.errors = Long.parseLong(getValue(line, "errors"));
+				if (line.contains("dropped"))
+					iface.txPacket.dropped = Long.parseLong(getValue(line, "dropped"));
+				if (line.contains("overruns"))
+					iface.txPacket.overruns = Long.parseLong(getValue(line, "overruns"));
+				if (line.contains("carrier"))
+					iface.txPacket.carrier = Long.parseLong(getValue(line, "carrier"));
+				if (line.contains("collisions"))
+					iface.txPacket.collisions = Long.parseLong(getValue(line, "collisions"));
+
+			} else if (line.contains("carrier"))
+				iface.txPacket.carrier = Long.parseLong(getValue(line, "carrier"));
+			else if (line.contains("collisions")) {
+				iface.txPacket.collisions = Long.parseLong(getValue(line, "collisions"));
+				if (line.contains("txqueuelen"))
+					iface.txPacket.queuelen = Long.parseLong(getValue(line, "txqueuelen"));
+			} else if (line.contains("txqueuelen")) {
+				if (iface.txPacket == null)
+					iface.txPacket = new TxPacket();
+				iface.txPacket.queuelen = Long.parseLong(getValue(line, "txqueuelen"));
+				iface.linkEncap = line.substring(line.indexOf("(") + 1, line.indexOf(")")).toLowerCase();
+				int s = line.indexOf(" ") + 1;
+				iface.hwaddr = line.substring(s, line.indexOf(" ", s));
+			} else {
+				String[] tokens = line.trim().split(regex);
+				for (String token : tokens) {
+					token = token.toLowerCase().trim();
+					if (token.startsWith("link encap")) {
+						iface.linkEncap = getValue(token, "link encap");
+					} else if (token.startsWith("mtu")) {
+						iface.mtu = Integer.parseInt(getValue(token, "mtu"));
+					} else if (token.startsWith("inet addr")) {
+						iface.inet = InetAddress.getByName(getValue(token, "inet addr"));
+					} else if (token.startsWith("inet6 addr")) {
+						String value = getValue(token, "inet6 addr");
 						iface.inet6 = (Inet6Address) Inet6Address.getByName(value.substring(0, value.indexOf("/")));
-						iface.cidr = Integer.parseInt(value.substring(value.indexOf("/") + 1, value.lastIndexOf(" ")));
-						iface.scope = value.substring(value.lastIndexOf(":") + 1);
-					} else if (key.equals("MTU"))
-						iface.mtu = Integer.parseInt(value);
-					else if (key.equals("Metric"))
-						iface.metric = Integer.parseInt(value);
-					else if (key.equals("RX packets"))
-						iface.rxPacket = new RxPacket(token.trim());
-					else if (key.equals("TX packets"))
-						iface.txPacket = new TxPacket(token.trim() + " " + br.readLine().trim());
-					else if (key.equals("RX bytes"))
-						iface.rxBytes = Long.parseLong(value.split(" ")[0]);
-					else if (key.equals("TX bytes"))
-						iface.txBytes = Long.parseLong(value.split(" ")[0]);
-					else if (key.equals("Interrupt")) {
-						if (value.contains(" ")) {
-							iface.interrupt = Integer.parseInt(value.substring(0, value.indexOf(" ")));
-							iface.baseAddress = value.substring(value.lastIndexOf(":") + 1);
-						} else
-							iface.interrupt = Integer.parseInt(value);
-					} else if (key.equals("Memory"))
-						iface.memory = value;
-				} else {
-					if (token.matches("[A-Z ]+"))
+						iface.cidr = Integer.parseInt(value.substring(value.indexOf("/") + 1));
+						iface.scope = token.substring(token.lastIndexOf(":") + 1).toLowerCase();
+					} else if (token.startsWith("inet ")) {
+						iface.inet = InetAddress.getByName(getValue(token, "inet"));
+					} else if (token.startsWith("inet6 ")) {
+						iface.inet6 = (Inet6Address) Inet6Address.getByName(getValue(token, "inet6"));
+					} else if (token.startsWith("prefixlen")) {
+						iface.cidr = Integer.parseInt(getValue(token, "prefixlen"));
+					} else if (token.startsWith("scopeid")) {
+						String scope = getValue(token, "scopeid");
+						iface.scope = scope.substring(scope.indexOf("<") + 1, scope.length() - 1).toLowerCase();
+					} else if (token.startsWith("p-t-p")) {
+						iface.mask = InetAddress.getByName(getValue(token, "p-t-p"));
+					} else if (token.startsWith("mask")) {
+						iface.mask = InetAddress.getByName(getValue(token, "mask"));
+					} else if (token.startsWith("netmask")) {
+						iface.mask = InetAddress.getByName(getValue(token, "netmask"));
+					} else if (token.startsWith("metric")) {
+						iface.metric = Integer.parseInt(getValue(token, "metric"));
+					} else if (token.startsWith("hwaddr")) {
+						iface.hwaddr = getValue(token, "hwaddr");
+					} else if (token.matches("[A-Z ]+"))
 						iface.options = token;
 					else if (token.contains(" ")) {
 						if (token.startsWith("HWaddr "))
@@ -211,56 +260,44 @@ public class NetworkInterface {
 		return iface;
 	}
 
+	private static String getValue(String line, String name) {
+		int s = line.indexOf(name) + name.length() + 1;
+		if (name.equals("inet6 addr"))
+			s += 1;
+		int e = line.indexOf(" ", s);
+
+		if (e == -1)
+			return line.substring(s).trim();
+		return line.substring(s, e).trim();
+	}
+
 	public static class RxPacket {
-		private int packets;
-		private int errors;
-		private int dropped;
-		private int overruns;
-		private int frame;
+		private long packets;
+		private long errors;
+		private long dropped;
+		private long overruns;
+		private long frame;
 
-		public RxPacket(String str) {
-			String[] tokens = str.split(" ");
-
-			if (!tokens[0].equals("RX"))
-				throw new IllegalArgumentException("isn't ifconfig rx packet format");
-
-			for (String token : tokens) {
-				if (!token.contains(":"))
-					continue;
-
-				String key = token.split(":")[0];
-				String value = token.split(":")[1];
-
-				if (key.equals("packets"))
-					this.packets = Integer.parseInt(value);
-				else if (key.equals("errors"))
-					this.errors = Integer.parseInt(value);
-				else if (key.equals("dropped"))
-					this.dropped = Integer.parseInt(value);
-				else if (key.equals("overruns"))
-					this.overruns = Integer.parseInt(value);
-				else if (key.equals("frame"))
-					this.frame = Integer.parseInt(value);
-			}
+		public RxPacket() {
 		}
 
-		public int getPackets() {
+		public long getPackets() {
 			return packets;
 		}
 
-		public int getErrors() {
+		public long getErrors() {
 			return errors;
 		}
 
-		public int getDropped() {
+		public long getDropped() {
 			return dropped;
 		}
 
-		public int getOverruns() {
+		public long getOverruns() {
 			return overruns;
 		}
 
-		public int getFrame() {
+		public long getFrame() {
 			return frame;
 		}
 
@@ -272,69 +309,42 @@ public class NetworkInterface {
 	}
 
 	public static class TxPacket {
-		private int packets;
-		private int errors;
-		private int dropped;
-		private int overruns;
-		private int carrier;
-		private int collisions;
-		private int queuelen;
+		private long packets;
+		private long errors;
+		private long dropped;
+		private long overruns;
+		private long carrier;
+		private long collisions;
+		private long queuelen;
 
-		public TxPacket(String str) {
-			String[] tokens = str.split(" ");
-
-			if (!tokens[0].equals("TX"))
-				throw new IllegalArgumentException("isn't ifconfig tx packet format");
-
-			for (String token : tokens) {
-				if (!token.contains(":"))
-					continue;
-
-				String key = token.split(":")[0];
-				String value = token.split(":")[1];
-
-				if (key.equals("packets"))
-					this.packets = Integer.parseInt(value);
-				else if (key.equals("errors"))
-					this.errors = Integer.parseInt(value);
-				else if (key.equals("dropped"))
-					this.dropped = Integer.parseInt(value);
-				else if (key.equals("overruns"))
-					this.overruns = Integer.parseInt(value);
-				else if (key.equals("carrier"))
-					this.carrier = Integer.parseInt(value);
-				else if (key.equals("collisions"))
-					this.collisions = Integer.parseInt(value);
-				else if (key.equals("txqueuelen"))
-					this.queuelen = Integer.parseInt(value);
-			}
+		public TxPacket() {
 		}
 
-		public int getPackets() {
+		public long getPackets() {
 			return packets;
 		}
 
-		public int getErrors() {
+		public long getErrors() {
 			return errors;
 		}
 
-		public int getDropped() {
+		public long getDropped() {
 			return dropped;
 		}
 
-		public int getOverruns() {
+		public long getOverruns() {
 			return overruns;
 		}
 
-		public int getCarrier() {
+		public long getCarrier() {
 			return carrier;
 		}
 
-		public int getCollisions() {
+		public long getCollisions() {
 			return collisions;
 		}
 
-		public int getQueuelen() {
+		public long getQueuelen() {
 			return queuelen;
 		}
 
@@ -343,14 +353,5 @@ public class NetworkInterface {
 			return "TxPacket [packets=" + packets + ", errors=" + errors + ", dropped=" + dropped + ", overruns=" + overruns
 					+ ", carrier=" + carrier + ", collisions=" + collisions + ", queuelen=" + queuelen + "]";
 		}
-	}
-
-	@Override
-	public String toString() {
-		return "NetworkInterface [name=" + name + ", linkEncap=" + linkEncap + ", hwaddr=" + hwaddr + ", inet=" + inet + ", ptp="
-				+ ptp + ", mask=" + mask + ", inet6=" + inet6 + ", cidr=" + cidr + ", scope=" + scope + ", options=" + options
-				+ ", mtu=" + mtu + ", metric=" + metric + ", rxPacket=" + rxPacket + ", txPacket=" + txPacket + ", rxBytes="
-				+ rxBytes + ", txBytes=" + txBytes + ", interrupt=" + interrupt + ", baseAddress=" + baseAddress + ", memory="
-				+ memory + "]";
 	}
 }
