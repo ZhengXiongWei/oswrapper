@@ -360,7 +360,7 @@ LPTSTR getMessageString(LPTSTR lpLogName, LPTSTR lpSourceName, LPTSTR lpValueNam
 		if (allocIndex >= 100)
 			break;
 
-		hResources[allocIndex++] = LoadLibrary(pch);
+		hResources[allocIndex++] = LoadLibraryEx(pch, NULL, DONT_RESOLVE_DLL_REFERENCES|LOAD_IGNORE_CODE_AUTHZ_LEVEL|LOAD_LIBRARY_AS_DATAFILE);
 		pch = wcstok_s(NULL, seps, &context);
 	}
 
